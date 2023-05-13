@@ -5,7 +5,8 @@ Django==3.2.19
 djongo==1.3.6
 dnspython==2.3.0
 gunicorn==20.1.0
-pymongo==4.3.3
+# https://stackoverflow.com/questions/70185942/why-i-am-getting-not-implemented-error-database-objects-do-not-implement-truth
+pymongo==3.12.3
 python-decouple==3.8
 pytz==2023.3
 sqlparse==0.2.4
