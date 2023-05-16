@@ -7,6 +7,7 @@ from django.conf import settings
 sapi = ShoonyaAPI()
 shoonya_api = sapi.login()
 sapi.open_websocket()
+print(sapi.is_loggedin)
 
 
 # Create your views here.

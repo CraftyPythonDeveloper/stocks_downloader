@@ -47,6 +47,7 @@ class ShoonyaAPI:
     def get_token(self, symbol, exchange="NSE", multiple=False):
         if not self.is_loggedin:
             logger.error("Not Logged in")
+            print("Not logged in")
             return False
         data = self.api.searchscrip(exchange=exchange, searchtext=symbol)
         if multiple:
