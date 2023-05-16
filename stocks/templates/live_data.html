@@ -1,0 +1,83 @@
+{% extends "navbar.html" %}
+
+{% block css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css">
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+
+<!-- DataTables Extensions - Column Filter -->
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.2.0/css/fixedHeader.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/3.3.4/css/fixedColumns.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/fixedheader/3.2.0/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/fixedcolumns/3.3.4/js/dataTables.fixedColumns.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<table id="myTable" class="table table-striped">
+  <thead>
+    <tr>
+      <th>Tick</th>
+      <th>Unix Timestamp</th>
+      <th>ltp</th>
+      <th>volume</th>
+      <th>datetime</th>
+      <!-- Add more columns as needed -->
+    </tr>
+  </thead>
+  <tbody>
+  {% for record in latest_data %}
+  <tr>
+    <td>{{record.tick}}</td>
+    <td>{{record.unix_time}}</td>
+    <td>{{record.ltp}}</td>
+    <td>{{record.volume}}</td>
+    <td>{{record.date_time}}</td>
+  </tr>
+  {% endfor %}
+    <!-- Add table rows and data -->
+  </tbody>
+</table>
+
+{% endblock %}
+
+{% block javascript %}
+$(document).ready(function() {
+  var table = $('#myTable').DataTable({
+    searching: true, // Enable searching
+    paging: true, // Enable pagination if needed
+    ordering: true, // Enable sorting
+    fixedHeader: true, // Enable fixed header
+    fixedColumns: {
+      leftColumns: 0, // Set the number of fixed columns
+    },
+    initComplete: function() {
+      // Add individual column filters
+      this.api().columns().every(function() {
+        var column = this;
+        var columnIndex = column.index();
+        var columnData = column.data();
+
+        var select = $('<select><option value=""></option></select>')
+          .appendTo($(column.header()))
+          .on('change', function() {
+            var selectedValue = $.fn.dataTable.util.escapeRegex($(this).val());
+            column.search(selectedValue, false, false).draw();
+          });
+
+        columnData.unique().sort().each(function(d) {
+          select.append('<option value="' + d + '">' + d + '</option>');
+        });
+      });
+    }
+  });
+
+  table.draw(); // Redraw the table to apply filters initially
+});
+
+{% endblock %}

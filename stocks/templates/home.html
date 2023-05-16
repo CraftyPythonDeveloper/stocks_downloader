@@ -1,0 +1,98 @@
+{% extends "navbar.html" %}
+
+{% block css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css">
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+
+{% endblock %}
+
+{% block content %}
+  <section id="stock">
+    <div class="container-fluid">
+      <h2 class="text-center mb-5">Stock List</h2>
+      <div class="table-responsive">
+        <table class="table table-striped" id="stock-table">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Exchange</th>
+              <th>Symbol</th>
+              <th>CName</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for record in subscribed_data %}
+            <tr>
+              <td>{{record.token}}</td>
+              <td>{{record.exchange}}</td>
+              <td>{{record.symbol}}</td>
+              <td>{{record.cname}}</td>
+              <td><a href="/unsubscribe-token?token={{record.token}}">UnSubscribe</a> /
+                  <a href="/subscribe-token?token={{record.token}}">ReSubscribe</a></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <form id="search-form" method="get" action="/search-symbol">
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="searchInput" name="symbol" placeholder="Search symbol...">
+          <div class="input-group-append">
+            <button class="btn btn-primary" type="submit" id="searchButton">Search</button>
+          </div>
+        </div>
+      </form>
+      {% if symbol_data %}
+        <div class="table-responsive mt-5">
+          <table class="table table-striped" id="stock-info-table">
+            <thead>
+              <tr>
+                <th>Exchange</th>
+                <th>Token</th>
+                <th>Symbol</th>
+                <th>Common Name</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% if symbol_data.status %}
+              {% for record in symbol_data.data %}
+                <tr>
+                  <td>{{record.exch}}</td>
+                  <td>{{record.token}}</td>
+                  <td>{{record.tsym}}</td>
+                  <td>{{record.cname}}</td>
+                  <td><a href="/subscribe-token?token={{ record.token }}">Subscribe</a></td>
+                </tr>
+              {% endfor %}
+            {% else %}
+                <tr>
+                  <td>No Data...</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+            {% endif %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
+
+{% block javascript %}
+  $(document).ready(function() {
+      $('#stock-table').DataTable({
+      });
+  } );
+{% endblock %}
