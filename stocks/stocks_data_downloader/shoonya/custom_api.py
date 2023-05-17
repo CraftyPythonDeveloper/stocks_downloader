@@ -73,11 +73,11 @@ class ShoonyaAPI:
     def on_update(tick_data):
         try:
             if tick_data.get("ft") and tick_data.get("lp"):
-                dt = datetime.fromtimestamp(tick_data.get("ft"), tz=tz)
-                data = WebSocketData(tick=tick_data.get("tk"), unix_time=int(tick_data.get("ft")),
-                                     ltp=float(tick_data.get("lp")), date_time=dt)
-                data.save(using="sqlite_db")
+                data = WebSocketData(tick=int(tick_data.get("tk")), unix_time=int(tick_data.get("ft")),
+                                     ltp=float(tick_data.get("lp")))
+                data.save()
         except Exception as e:
+            # print("exception occured")
             print(e)
         # if tick_data.get("ft") and tick_data.get("v"):
         #     obj, created = WebSocketData.objects.update_or_create(tick=int(tick_data["tk"]), unix_time=int(tick_data["ft"]),
