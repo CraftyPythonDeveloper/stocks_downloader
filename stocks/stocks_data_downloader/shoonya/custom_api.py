@@ -1,10 +1,6 @@
-import pytz
 from .api_helper import ShoonyaApiPy
-import time
 from datetime import datetime, timedelta
-import pandas as pd
 import pyotp
-import pandas_ta as ta
 from stocks_data_downloader.models import WebSocketData
 import pytz
 from decouple import config
@@ -18,6 +14,24 @@ def generate_candle(data):
     return {"open": data["price"][0], "close": data["price"][-1], "high": max(data["price"]), "low": min(data["price"]),
             "time": data["time"][-1], "tick": data["tick"], "length": len(data["time"])}
 
+
+def insert_into_database(model, data):
+    if ("tk" in data.keys()) and ("ft" in data.keys()):
+        old = model.objects.filter(tick=data.get("tk"), unix_time=data.get("ft")).last()
+        if old:
+            if data.get("lp"):
+                old.ltp = float(data["lp"])
+            if data.get("v"):
+                old.volume = int(data["v"])
+            old.save()
+            return old
+        new = model(tick=int(data.get("tk")), unix_time=int(data.get("ft")))
+        if data.get("lp"):
+            new.ltp = float(data["lp"])
+        if data.get("v"):
+            new.volume = int(data["v"])
+        new.save()
+        return new
 
 class ShoonyaAPI:
 
@@ -72,17 +86,15 @@ class ShoonyaAPI:
     @staticmethod
     def on_update(tick_data):
         try:
-            if tick_data.get("ft") and tick_data.get("lp"):
-                data = WebSocketData(tick=int(tick_data.get("tk")), unix_time=int(tick_data.get("ft")),
-                                     ltp=float(tick_data.get("lp")))
-                data.save()
+            insert_into_database(WebSocketData, tick_data)
+            # if tick_data.get("ft") and tick_data.get("lp"):
+            #     data = WebSocketData(tick=int(tick_data.get("tk")), unix_time=int(tick_data.get("ft")),
+            #                          ltp=float(tick_data.get("lp")))
+            #     data.save()
         except Exception as e:
-            # print("exception occured")
+            print("exception occured while updating data")
             print(e)
-        # if tick_data.get("ft") and tick_data.get("v"):
-        #     obj, created = WebSocketData.objects.update_or_create(tick=int(tick_data["tk"]), unix_time=int(tick_data["ft"]),
-        #                                            defaults={"volume": tick_data["v"]})
-        #     print(created, obj)
+            print(tick_data)
 
     def event_handler_feed_update1(self, tick_data):
         print(f"feed update {tick_data}")
