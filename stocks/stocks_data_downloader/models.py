@@ -1,29 +1,13 @@
 from django.db import models
-from django.utils import timezone
 from datetime import datetime
 import pytz
 
 tz = pytz.timezone('Asia/kolkata')
 
 
-# Create your models here.
-
-class TestModelMongo(models.Model):
-    name = models.CharField(max_length=200, default=None)
-    age = models.IntegerField(default=None)
-    created_at = models.DateTimeField(editable=True)
-    modified = models.DateTimeField()
-
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.created_at = timezone.now()
-        self.modified = timezone.now()
-        return super(TestModelMongo, self).save(*args, **kwargs)
-
-
 class WebSocketData(models.Model):
-    tick = models.IntegerField()
-    unix_time = models.IntegerField()
+    tick = models.IntegerField(null=False)
+    unix_time = models.IntegerField(null=False)
     ltp = models.FloatField(null=True)
     volume = models.IntegerField(null=True)
     date_time = models.CharField(max_length=50, null=True)
@@ -32,10 +16,112 @@ class WebSocketData(models.Model):
         self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M:%S")
         return super(WebSocketData, self).save(*args, *kwargs)
 
+    class Meta:
+        db_table = "websocket_data"
+
 
 class SubscribedData(models.Model):
-    token = models.IntegerField()
-    exchange = models.CharField(max_length=100)
-    symbol = models.CharField(max_length=100)
-    cname = models.CharField(max_length=100)
+    token = models.IntegerField(null=False)
+    exchange = models.CharField(max_length=100, null=True)
+    symbol = models.CharField(max_length=100, null=False)
+    cname = models.CharField(max_length=100, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "subscribed_data"
+
+
+class CandleOne(models.Model):
+    Tick = models.IntegerField(null=False)
+    Symbol = models.CharField(max_length=100, null=True)
+    Open = models.FloatField(null=True)
+    High = models.FloatField(null=True)
+    Low = models.FloatField(null=True)
+    Close = models.FloatField(null=True)
+    Volume = models.IntegerField(null=True)
+    unix_time = models.IntegerField(null=True)
+    date_time = models.CharField(max_length=50, null=True)
+
+    def save(self, *args, **kwargs):
+        self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M")
+        return super(CandleOne, self).save(*args, *kwargs)
+
+    class Meta:
+        db_table = "candle_one"
+
+
+class CandleFive(models.Model):
+    Tick = models.IntegerField(null=False)
+    Symbol = models.CharField(max_length=100, null=True)
+    Open = models.FloatField(null=True)
+    High = models.FloatField(null=True)
+    Low = models.FloatField(null=True)
+    Close = models.FloatField(null=True)
+    Volume = models.IntegerField(null=True)
+    unix_time = models.IntegerField(null=True)
+    date_time = models.CharField(max_length=50, null=True)
+
+    def save(self, *args, **kwargs):
+        self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M")
+        return super(CandleFive, self).save(*args, *kwargs)
+
+    class Meta:
+        db_table = "candle_five"
+
+
+class CandleFifteen(models.Model):
+    Tick = models.IntegerField(null=False)
+    Symbol = models.CharField(max_length=100, null=True)
+    Open = models.FloatField(null=True)
+    High = models.FloatField(null=True)
+    Low = models.FloatField(null=True)
+    Close = models.FloatField(null=True)
+    Volume = models.IntegerField(null=True)
+    unix_time = models.IntegerField(null=True)
+    date_time = models.CharField(max_length=50, null=True)
+
+    def save(self, *args, **kwargs):
+        self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M")
+        return super(CandleFifteen, self).save(*args, *kwargs)
+
+    class Meta:
+        db_table = "candle_fifteen"
+
+
+class CandleThirty(models.Model):
+    Tick = models.IntegerField(null=False)
+    Symbol = models.CharField(max_length=100, null=True)
+    Open = models.FloatField(null=True)
+    High = models.FloatField(null=True)
+    Low = models.FloatField(null=True)
+    Close = models.FloatField(null=True)
+    Volume = models.IntegerField(null=True)
+    unix_time = models.IntegerField(null=True)
+    date_time = models.CharField(max_length=50, null=True)
+
+    def save(self, *args, **kwargs):
+        self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M")
+        return super(CandleThirty, self).save(*args, *kwargs)
+
+    class Meta:
+        db_table = "candle_thirty"
+
+
+class CandleSixty(models.Model):
+    Tick = models.IntegerField(null=False)
+    Symbol = models.CharField(max_length=100, null=True)
+    Open = models.FloatField(null=True)
+    High = models.FloatField(null=True)
+    Low = models.FloatField(null=True)
+    Close = models.FloatField(null=True)
+    Volume = models.IntegerField(null=True)
+    unix_time = models.IntegerField(null=True)
+    date_time = models.CharField(max_length=50, null=True)
+
+    def save(self, *args, **kwargs):
+        self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M")
+        return super(CandleSixty, self).save(*args, *kwargs)
+
+    class Meta:
+        db_table = "candle_sixty"

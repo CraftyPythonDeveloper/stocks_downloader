@@ -85,7 +85,7 @@ DATABASES = {
     },
     'mongo': {
             'ENGINE': 'djongo',
-            'NAME': 'stocks',
+            'NAME': 'stocks_new',
             'ENFORCE_SCHEMA': False,
             'CLIENT': {
                 'host': config('MONGODB_HOST')
@@ -153,3 +153,7 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+RUN_THREADS = True
+
+TABLES_TO_MIGRATE = ["websocket_data"]
