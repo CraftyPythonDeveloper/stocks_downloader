@@ -4,33 +4,42 @@ from .shoonya.custom_api import ShoonyaAPI
 from .models import SubscribedData, WebSocketData
 from django.conf import settings
 from utils.decorators import allowed_methods
-from utils.threadings import (one_minutes_candle, five_minutes_candle, fifteen_minutes_candle, thirty_minutes_candle, sixty_minutes_candle)
+from utils.threadings import (one_minutes_candle, five_minutes_candle, fifteen_minutes_candle, thirty_minutes_candle,
+                              sixty_minutes_candle, migrate_tables_to_mongo)
 from utils.make_candles import CANDLE_TIMEFRAMES
 from django.conf import settings
+import logging
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 
+
+logger = logging.getLogger(__name__)
 
 # run threads
 if settings.RUN_THREADS:
-    print("running threads")
+    logger.info("Running threads in background..")
     one_minutes_candle.start()
     five_minutes_candle.start()
     fifteen_minutes_candle.start()
     thirty_minutes_candle.start()
     sixty_minutes_candle.start()
+    migrate_tables_to_mongo.start()
 
 sapi = ShoonyaAPI()
 shoonya_api = sapi.login()
 sapi.open_websocket()
-print(f"login status {sapi.is_loggedin}")
+logger.info(f"Login status {sapi.is_loggedin}")
 
 
 @allowed_methods(["GET"])
+@login_required
 def index(request):
     data = SubscribedData.objects.filter(is_active=True)
     return render(request, "home.html", context={"subscribed_data": data})
 
 
 @allowed_methods(["GET"])
+@login_required
 def search_token(request):
     symbol = request.GET.get("symbol")
     # print(symbol)
@@ -46,6 +55,7 @@ def search_token(request):
 
 
 @allowed_methods(["GET"])
+@login_required
 def subscribe_token(request):
     token = request.GET.get("token")
     if not token:
@@ -68,6 +78,7 @@ def subscribe_token(request):
 
 
 @allowed_methods(["GET"])
+@login_required
 def unsubscribe_token(request):
     token = request.GET.get("token")
     if not token:
@@ -80,6 +91,7 @@ def unsubscribe_token(request):
 
 
 @allowed_methods(["GET"])
+@login_required
 def live_data(request):
     limit = 200
     rows = request.GET.get("rows")
@@ -94,16 +106,21 @@ def live_data(request):
 
 
 @allowed_methods(["GET"])
+@login_required
 def download_db(request):
-    db_location = settings.BASE_DIR / 'db.sqlite3'
+    download = request.GET.get("download", default="db")
+    file_location = settings.BASE_DIR / 'db.sqlite3'
+    if download == "logs":
+        file_location = settings.BASE_DIR / 'backends.log'
     try:
-        response = FileResponse(open(db_location, 'rb'), as_attachment=True)
+        response = FileResponse(open(file_location, 'rb'), as_attachment=True)
     except IOError:
         response = HttpResponseNotFound('<h1>File not exist</h1>')
     return response
 
 
 @allowed_methods(["GET"])
+@login_required
 def shoonya_login(request):
     try:
         sapi.logout()
@@ -111,11 +128,12 @@ def shoonya_login(request):
         pass
     sapi.login()
     sapi.open_websocket()
-    print("loggedin to api")
+    logger.info("Loggedin to api from endpoint /api-login")
     return render(request, "api_login.html", context={"message": "Logged in to shoonya api"})
 
 
 @allowed_methods(["GET"])
+@login_required
 def show_candles(request):
     limit = 200
     timeframe = 1
@@ -133,3 +151,35 @@ def show_candles(request):
         data = CANDLE_TIMEFRAMES[timeframe].objects.all().order_by("-unix_time")[:limit]
 
     return render(request, "candles.html", context={"latest_data": data})
+
+
+@allowed_methods(["GET"])
+@login_required
+def clear_logs(request):
+    confirm = request.GET.get("confirm", default="no")
+    if confirm.lower() == "yes":
+        logfile = settings.BASE_DIR / 'backends.log'
+        open(logfile, 'w').close()
+        return render(request, "api_login.html", context={"message": "Log file cleared.."})
+    return redirect("/")
+
+
+@allowed_methods(["GET", "POST"])
+def stocks_login(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            login(request=request, user=user)
+            return redirect("/")
+        else:
+            return render(request, "registration/login.html", context={"message": "Incorrect Credentials.."})
+    return render(request, "registration/login.html", context={"message": None})
+
+
+@allowed_methods(["GET"])
+@login_required
+def stocks_logout(request):
+    logout(request)
+    return redirect("/login")

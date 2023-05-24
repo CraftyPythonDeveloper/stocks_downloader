@@ -10,11 +10,6 @@ tz = pytz.timezone("Asia/Kolkata")
 logger = logging.getLogger(__name__)
 
 
-def generate_candle(data):
-    return {"open": data["price"][0], "close": data["price"][-1], "high": max(data["price"]), "low": min(data["price"]),
-            "time": data["time"][-1], "tick": data["tick"], "length": len(data["time"])}
-
-
 def insert_into_database(model, data):
     if ("tk" in data.keys()) and ("ft" in data.keys()):
         old = model.objects.filter(tick=data.get("tk"), unix_time=data.get("ft")).last()
@@ -33,35 +28,35 @@ def insert_into_database(model, data):
         new.save()
         return new
 
+
 class ShoonyaAPI:
 
     def __init__(self):
         self.api = ShoonyaApiPy()
         self.is_loggedin = False
         self.is_feed_opened = False
-        self.stock_data_dict = {}
 
     def login(self, yaml_file=None):
         ret = self.api.login(userid=config('SHOONYA_USER'), password=config('SHOONYA_PWD'),
                              twoFA=pyotp.TOTP(config('SHOONYA_TOKEN')).now(), vendor_code=config('SHOONYA_VC'),
                              api_secret=config('SHOONYA_APIKEY'), imei=config('SHOONYA_IMEI'))
         if ret:
-            logger.info("login successful..")
+            logger.info("login successful to shoonya api..")
             self.is_loggedin = True
             return self.api
-        logger.info("Login failed, please check your credentials..")
+        logger.error("Login failed to shoonya api, please check your credentials..")
         self.is_loggedin = False
         return self.api
 
     def logout(self):
         self.api.logout()
+        logger.info("Logged out from shoonya api..")
         self.is_loggedin = False
         return True
 
     def get_token(self, symbol, exchange="NSE", multiple=False):
         if not self.is_loggedin:
-            logger.error("Not Logged in")
-            print("Not logged in")
+            logger.error("Unable to get token. Please login first")
             return False
         data = self.api.searchscrip(exchange=exchange, searchtext=symbol)
         if multiple:
@@ -87,17 +82,8 @@ class ShoonyaAPI:
     def on_update(tick_data):
         try:
             insert_into_database(WebSocketData, tick_data)
-            # if tick_data.get("ft") and tick_data.get("lp"):
-            #     data = WebSocketData(tick=int(tick_data.get("tk")), unix_time=int(tick_data.get("ft")),
-            #                          ltp=float(tick_data.get("lp")))
-            #     data.save()
-        except Exception as e:
-            print("exception occured while updating data")
-            print(e)
-            print(tick_data)
-
-    def event_handler_feed_update1(self, tick_data):
-        print(f"feed update {tick_data}")
+        except Exception:
+            logger.exception("Exception while updating websocket data on_update method..")
 
     @staticmethod
     def event_handler_order_update(tick_data):
@@ -111,7 +97,7 @@ class ShoonyaAPI:
             self.api.start_websocket(order_update_callback=self.event_handler_order_update,
                                      subscribe_callback=self.on_update,
                                      socket_open_callback=self.open_callback)
-            print("websocket is opened, subscribe to events..")
+            logger.info("websocket connection is opened to shoonya api, subscribe to events..")
             self.is_feed_opened = True
             return True
         return False
@@ -119,12 +105,14 @@ class ShoonyaAPI:
     def close_websocket(self):
         if self.is_loggedin:
             self.api.close_websocket()
+            logger.info("Closing the websocket connection to shoonya api")
 
     def subscribe_wsticks(self, tick, exchange="NSE"):
         if self.is_feed_opened:
             self.api.subscribe(f"{exchange}|{tick}")
             return True
-        print("websocket not running, start the websocket first by calling start_websocket() method..")
+        logger.error("websocket not running to shoonya api, start the websocket first by calling "
+                     "start_websocket() method..")
         return False
 
     def unsubscribe_wsticks(self, ticks, exchange="NSE"):
@@ -134,6 +122,6 @@ class ShoonyaAPI:
         if self.is_feed_opened:
             feds = [f"{exchange}|{t}" for t in ticks]
             self.api.unsubscribe(feds)
-            print(f"unsubscribed {ticks} ticks")
+            logger.info(f"unsubscribed {ticks} ticks to shoonya api")
             return True
         return False

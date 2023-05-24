@@ -83,14 +83,6 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     },
-    'mongo': {
-            'ENGINE': 'djongo',
-            'NAME': 'stocks_new',
-            'ENFORCE_SCHEMA': False,
-            'CLIENT': {
-                'host': config('MONGODB_HOST')
-            }
-    }
 }
 
 #https://stackoverflow.com/questions/70185942/why-i-am-getting-not-implemented-error-database-objects-do-not-implement-truth
@@ -154,6 +146,45 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-RUN_THREADS = True
+RUN_THREADS = False
 
-TABLES_TO_MIGRATE = ["websocket_data"]
+TABLES_TO_MIGRATE = ["websocket_data", "candle_one", "candle_five", "candle_fifteen", "candle_thirty",
+                     "candle_sixty"]
+
+MONGO_DATABASE = "stocks_new"
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} | Module:{module} | Process:{process:d} | Thread:{thread:d} | Message: "
+                      "{message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.FileHandler",
+            "filename": os.path.join(BASE_DIR, "backends.log"),
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+}
+
+LOGIN_URL = "login"

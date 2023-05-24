@@ -41,6 +41,7 @@ class CandleOne(models.Model):
     Close = models.FloatField(null=True)
     Volume = models.IntegerField(null=True)
     unix_time = models.IntegerField(null=True)
+    length = models.IntegerField(null=True)
     date_time = models.CharField(max_length=50, null=True)
 
     def save(self, *args, **kwargs):
@@ -60,6 +61,7 @@ class CandleFive(models.Model):
     Close = models.FloatField(null=True)
     Volume = models.IntegerField(null=True)
     unix_time = models.IntegerField(null=True)
+    length = models.IntegerField(null=True)
     date_time = models.CharField(max_length=50, null=True)
 
     def save(self, *args, **kwargs):
@@ -79,6 +81,7 @@ class CandleFifteen(models.Model):
     Close = models.FloatField(null=True)
     Volume = models.IntegerField(null=True)
     unix_time = models.IntegerField(null=True)
+    length = models.IntegerField(null=True)
     date_time = models.CharField(max_length=50, null=True)
 
     def save(self, *args, **kwargs):
@@ -98,6 +101,7 @@ class CandleThirty(models.Model):
     Close = models.FloatField(null=True)
     Volume = models.IntegerField(null=True)
     unix_time = models.IntegerField(null=True)
+    length = models.IntegerField(null=True)
     date_time = models.CharField(max_length=50, null=True)
 
     def save(self, *args, **kwargs):
@@ -117,6 +121,7 @@ class CandleSixty(models.Model):
     Close = models.FloatField(null=True)
     Volume = models.IntegerField(null=True)
     unix_time = models.IntegerField(null=True)
+    length = models.IntegerField(null=True)
     date_time = models.CharField(max_length=50, null=True)
 
     def save(self, *args, **kwargs):
