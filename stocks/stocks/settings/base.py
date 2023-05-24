@@ -146,7 +146,7 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-RUN_THREADS = False
+RUN_THREADS = True
 
 TABLES_TO_MIGRATE = ["websocket_data", "candle_one", "candle_five", "candle_fifteen", "candle_thirty",
                      "candle_sixty"]
