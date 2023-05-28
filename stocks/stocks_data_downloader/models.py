@@ -130,3 +130,27 @@ class CandleSixty(models.Model):
 
     class Meta:
         db_table = "candle_sixty"
+
+
+class DailySubscribe(models.Model):
+    unix_time = models.IntegerField()
+    subscribe = models.BooleanField(default=False)
+    unsubscribe = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "daily_subscribe"
+
+
+class SchedularTable(models.Model):
+    function_name = models.CharField(max_length=500)
+    readable_function = models.TextField(null=True)
+    serialized_function = models.BinaryField(null=True)
+    last_run = models.IntegerField(null=True)
+    next_run = models.IntegerField(null=True)
+    is_enabled = models.BooleanField(null=True)
+    run_counts = models.IntegerField(null=True)
+    successful = models.IntegerField(null=True)
+    failed = models.IntegerField(null=True)
+
+    class Meta:
+        db_table = "schedular_table"

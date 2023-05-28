@@ -152,7 +152,7 @@ TABLES_TO_MIGRATE = ["websocket_data", "candle_one", "candle_five", "candle_fift
                      "candle_sixty"]
 
 MONGO_DATABASE = "stocks_new"
-
+LOGFILE_FOLDER = os.path.join(BASE_DIR, "logs")
 
 LOGGING = {
     "version": 1,
@@ -177,9 +177,19 @@ LOGGING = {
         "file": {
             "level": "INFO",
             "class": "logging.FileHandler",
-            "filename": os.path.join(BASE_DIR, "backends.log"),
+            "filename": os.path.join(LOGFILE_FOLDER, "backend.log"),
             "formatter": "verbose",
         },
+        "rotating_file": {
+            "level": "INFO",
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": os.path.join(LOGFILE_FOLDER, "backend.log"),
+            "when": "M",
+            "interval": 1,
+            "backupCount": 10,
+            "encoding": "utf-8",
+            "formatter": "verbose",
+        }
     },
     "root": {
         "handlers": ["console", "file"],

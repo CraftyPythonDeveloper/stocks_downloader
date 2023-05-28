@@ -13,4 +13,7 @@ urlpatterns = [
     path("clear-logs/", views.clear_logs, name="clear-logs"),
     path("login/", views.stocks_login, name="login"),
     path("logout/", views.stocks_logout, name="logout"),
+    path("ping/", views.ping, name="ping"),
+    path("get-running-threads/", views.get_running_threads, name="get-running-threads"),
+    path("websocket-ops/", views.websocket_ops, name="websocket-ops"),
 ]

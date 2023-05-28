@@ -1,4 +1,7 @@
 # this will migrate data from sqlite to mongodb
+import shutil
+
+import requests
 from django.apps import apps
 from django.conf import settings
 from decouple import config
@@ -6,6 +9,12 @@ from pymongo import MongoClient, DESCENDING
 import time
 from django.db.models import Q
 import logging
+from datetime import datetime, timedelta
+from urllib import error, request
+from stocks_data_downloader.models import DailySubscribe, SubscribedData
+from utils.shoonya_api import sapi
+from utils.make_candles import is_working_hr
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +45,55 @@ models = {model._meta.db_table: model for model in apps.get_models()}
 valid_tables = [table for table in tables_to_migrate if table in models.keys()]
 
 
+def self_ping():
+    try:
+        response = request.urlopen("https://stock-data-downloader.onrender.com/ping", timeout=30)
+        if response.status == 200:
+            logger.info("Server is alive..")
+            return True
+        logger.error(f"server seems not accessible. Status code: {response.status}")
+        return False
+    except error.HTTPError:
+        logger.error(f"Ping timed out.. Server seems offline..")
+        return False
+
+
+def subscribe_unsubscribe_market():
+    if not is_working_hr():
+        return
+    if datetime.now().replace(hour=9, minute=14, second=0) <= datetime.now() <=\
+            datetime.now().replace(hour=9, minute=16, second=0):
+        logger.info("Market is open...")
+        unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
+        sub = DailySubscribe.objects.filter(unix_time=unix_time).last()
+        if not sub:
+            ticks = SubscribedData.objects.filter(status=True)
+            for t in ticks:
+                sapi.subscribe_wsticks(t.tick)
+            update_status = DailySubscribe(unix_time=unix_time, subscribe=True)
+            update_status.save()
+            logger.info(f"Market is open auto-subscribed to all {len(ticks)} active ticks")
+            return
+        logger.info("Already auto-subscribed ticks. Skipping...")
+        return
+    elif datetime.now().replace(hour=15, minute=30, second=0) <= datetime.now() <=\
+            datetime.now().replace(hour=15, minute=31, second=0):
+        # unsubscribe all ticks
+        logger.info("Market is closed...")
+        unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
+        sub = DailySubscribe.objects.filter(unix_time=unix_time, subscribe=True, unsubscribe=False).last()
+        if sub:
+            ticks = SubscribedData.objects.filter(status=True)
+            for t in ticks:
+                sapi.unsubscribe_wsticks(t.tick)
+            sub.unsubscribe = True
+            sub.save()
+            logger.info(f"Market is closed auto-unsubscribed to all {len(ticks)} active ticks")
+            return
+        logger.info("Already auto-unsubscribed ticks. Skipping...")
+        return
+
+
 def migrate_table():
     for table in valid_tables:
         latest_id, unix_time = mongo_get_latest_id(table)
@@ -46,11 +104,51 @@ def migrate_table():
         db[table].insert_many(data_dict)
 
 
+def upload_to_gofile_bucket(filepath, filename):
+    try:
+        best_server = requests.get("https://api.gofile.io/getServer", timeout=30).json()["data"]["server"]
+        upload_api = f"https://{best_server}.gofile.io/uploadFile"
+        data = {"token": config("GOFILE_TOKEN"), "folderId": config("GOFILE_FOLDER")}
+        response = requests.post(upload_api, files={filename: filepath}, data=data)
+        if response.ok:
+            logger.info(f"Log {filename} uploaded to GoFiles bucket successfully.. \n"
+                        f"Response body {response.json()}")
+            return
+        logger.info(f"Log {filename} uploading returned {response.status_code} status code on GoFile.. \n"
+                    f"Response body {response.json()}")
+    except Exception:
+        logger.exception(f"Something went wrong while uploading {filename} to gofiles")
+    return
+
+
+def upload_logs(previous_time):
+    if not previous_time + timedelta(hours=3) <= datetime.now().replace(minute=0, second=0, microsecond=0):
+        return previous_time
+    # copy/clear/send
+    try:
+        log_name = datetime.now().strftime("backend_%d-%m-%Y_%H-%M.log")
+        src = os.path.join(settings.LOGFILE_FOLDER, "backend.log")
+        dest = os.path.join(settings.LOGFILE_FOLDER, log_name)
+        shutil.copy(src, dest)
+        open(src, 'w').close()
+        upload_to_gofile_bucket(dest, log_name)
+        logger.info("Log file uploaded successfully")
+        os.remove(dest)
+        return previous_time + timedelta(hours=3)
+    except Exception:
+        logger.exception("Exception occured in upload_logs().. ")
+        return previous_time
+
+
 def migrate_tables(interval):
+    go_file_start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
     while True:
         try:
             migrate_table()
-            time.sleep(interval)
+            subscribe_unsubscribe_market()
+            go_file_start_time = upload_logs(go_file_start_time)
+            self_ping()
         except Exception:
             logger.exception("Exception in db_migrations..")
-            time.sleep(interval)
+
+        time.sleep(interval)

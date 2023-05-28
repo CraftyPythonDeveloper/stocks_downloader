@@ -1,0 +1,138 @@
+INFO 2023-05-28 23:05:26,527 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:26,767 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:27,020 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:29,884 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:30,187 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:30,505 | Module:db_migrations | Process:14168 | Thread:3492 | Message: Log backend_28-05-2023_23-05.log uploaded to GoFiles bucket successfully.. 
+Response body {'status': 'ok', 'data': {'downloadPage': 'https://gofile.io/d/kz3XOk', 'code': 'kz3XOk', 'parentFolder': '79573f50-3d75-48dd-b3a8-c35aae99315e', 'fileId': '76e6ad21-47a8-4859-9c87-a356425ef275', 'fileName': 'backend_28-05-2023_23-05.log', 'md5': 'b4bfa683be9ec25f178a35697de8854c'}}
+INFO 2023-05-28 23:05:30,510 | Module:db_migrations | Process:14168 | Thread:3492 | Message: Log file uploaded successfully
+INFO 2023-05-28 23:05:30,512 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:30,892 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+ERROR 2023-05-28 23:05:31,104 | Module:db_migrations | Process:14168 | Thread:3492 | Message: Ping timed out.. Server seems offline..
+INFO 2023-05-28 23:05:31,172 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:31,467 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:31,742 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:32,045 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:32,356 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:32,664 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:32,961 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:33,260 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:33,570 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:33,874 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:34,149 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:34,445 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:34,740 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:35,022 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:35,334 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:35,644 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:35,956 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:36,258 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:36,548 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:36,851 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:37,167 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:37,505 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:37,791 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:38,093 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:38,416 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:38,724 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:39,057 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:39,411 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:39,787 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:40,126 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:41,539 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:41,913 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:42,246 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:42,540 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:42,829 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:43,078 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:43,381 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:43,701 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:44,021 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:44,335 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:44,634 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:44,954 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:45,227 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:45,638 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:45,985 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:46,333 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:46,698 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:47,048 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:47,383 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:47,874 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:48,206 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:48,474 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:48,774 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:49,114 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:49,409 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:49,676 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:49,970 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:50,244 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:50,546 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:50,880 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:51,207 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:51,498 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:51,777 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:52,112 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:52,453 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:52,788 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:05:53,531 | Module:_logging | Process:14168 | Thread:11820 | Message: Websocket connected
+INFO 2023-05-28 23:26:22,003 | Module:views | Process:14496 | Thread:5888 | Message: Running threads in background..
+INFO 2023-05-28 23:26:22,004 | Module:views | Process:14496 | Thread:5888 | Message: Started running thread One Minutes Candle Thread in background..
+INFO 2023-05-28 23:26:22,004 | Module:views | Process:14496 | Thread:5888 | Message: Started running thread Five Minutes Candle Thread in background..
+INFO 2023-05-28 23:26:22,004 | Module:views | Process:14496 | Thread:5888 | Message: Started running thread Fifteen Minutes Candle Thread in background..
+INFO 2023-05-28 23:26:22,005 | Module:views | Process:14496 | Thread:5888 | Message: Started running thread Thirty Minutes Candle Thread in background..
+INFO 2023-05-28 23:26:22,005 | Module:views | Process:14496 | Thread:5888 | Message: Started running thread Sixty Minutes Candle Thread in background..
+INFO 2023-05-28 23:26:22,006 | Module:views | Process:14496 | Thread:5888 | Message: Started running thread Migrating data to mongo in background..
+INFO 2023-05-28 23:26:22,542 | Module:custom_api | Process:14496 | Thread:5888 | Message: login successful to shoonya api..
+INFO 2023-05-28 23:26:22,544 | Module:custom_api | Process:14496 | Thread:5888 | Message: websocket connection is opened to shoonya api, subscribe to events..
+INFO 2023-05-28 23:26:22,545 | Module:views | Process:14496 | Thread:5888 | Message: Login status True
+ERROR 2023-05-28 23:26:22,630 | Module:db_migrations | Process:14496 | Thread:6696 | Message: Exception in db_migrations..
+Traceback (most recent call last):
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\sqlite3\base.py", line 423, in execute
+    return Database.Cursor.execute(self, query, params)
+sqlite3.OperationalError: no such table: websocket_data
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\Anon\PycharmProjects\mongodb\stocks\utils\db_migrations.py", line 147, in migrate_tables
+    migrate_table()
+  File "C:\Users\Anon\PycharmProjects\mongodb\stocks\utils\db_migrations.py", line 101, in migrate_table
+    if not data:
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\models\query.py", line 284, in __bool__
+    self._fetch_all()
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\models\query.py", line 1324, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\models\query.py", line 51, in __iter__
+    results = compiler.execute_sql(chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\models\sql\compiler.py", line 1175, in execute_sql
+    cursor.execute(sql, params)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\utils.py", line 98, in execute
+    return super().execute(sql, params)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\utils.py", line 66, in execute
+    return self._execute_with_wrappers(sql, params, many=False, executor=self._execute)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\utils.py", line 75, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\utils.py", line 90, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\utils.py", line 84, in _execute
+    return self.cursor.execute(sql, params)
+  File "C:\ProgramData\Anaconda3\envs\mongodb\lib\site-packages\django\db\backends\sqlite3\base.py", line 423, in execute
+    return Database.Cursor.execute(self, query, params)
+django.db.utils.OperationalError: no such table: websocket_data
+INFO 2023-05-28 23:26:22,656 | Module:_logging | Process:14496 | Thread:7784 | Message: Websocket connected
+INFO 2023-05-28 23:27:24,068 | Module:custom_api | Process:11684 | Thread:4628 | Message: login successful to shoonya api..
+INFO 2023-05-28 23:27:24,070 | Module:custom_api | Process:11684 | Thread:4628 | Message: websocket connection is opened to shoonya api, subscribe to events..
+INFO 2023-05-28 23:27:24,071 | Module:views | Process:11684 | Thread:4628 | Message: Login status True
+INFO 2023-05-28 23:27:24,251 | Module:_logging | Process:11684 | Thread:2928 | Message: Websocket connected
+INFO 2023-05-28 23:27:39,240 | Module:custom_api | Process:14396 | Thread:6456 | Message: login successful to shoonya api..
+INFO 2023-05-28 23:27:39,242 | Module:custom_api | Process:14396 | Thread:6456 | Message: websocket connection is opened to shoonya api, subscribe to events..
+INFO 2023-05-28 23:27:39,242 | Module:views | Process:14396 | Thread:6456 | Message: Login status True
+INFO 2023-05-28 23:28:51,362 | Module:custom_api | Process:2176 | Thread:6876 | Message: login successful to shoonya api..
+INFO 2023-05-28 23:28:51,365 | Module:custom_api | Process:2176 | Thread:6876 | Message: websocket connection is opened to shoonya api, subscribe to events..
+INFO 2023-05-28 23:28:51,365 | Module:views | Process:2176 | Thread:6876 | Message: Login status True
+INFO 2023-05-28 23:28:51,561 | Module:_logging | Process:2176 | Thread:6724 | Message: Websocket connected

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
-from stocks_data_downloader.models import WebSocketData, SubscribedData, CandleOne, CandleFive, CandleFifteen, \
-    CandleThirty, CandleSixty
+from stocks_data_downloader.models import (WebSocketData, SubscribedData, CandleOne, CandleFive, CandleFifteen,
+                                           CandleThirty, CandleSixty,)
 import time
 import pytz
 import logging
@@ -77,7 +77,7 @@ def draw_candle(timeframe):
                     queryset = WebSocketData.objects.filter(tick=tick.token, unix_time__gte=start,
                                                             unix_time__lt=end).order_by("unix_time")
                     if queryset:
-                        candle = get_ohlvc(queryset=queryset, meta=tick, close_at=end)
+                        candle = get_ohlvc(queryset=queryset, meta=tick, close_at=start)
                         # CANDLE_TIMEFRAMES[timeframe].objects.create(**candle)
                         candle_obj = CANDLE_TIMEFRAMES[timeframe](**candle)
                         try:
@@ -92,3 +92,4 @@ def draw_candle(timeframe):
                 logger.exception(f"Exception occurred while generating {timeframe} minutes candle..")
             continue
         time.sleep(1)
+
