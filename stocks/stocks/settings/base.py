@@ -153,6 +153,7 @@ TABLES_TO_MIGRATE = ["websocket_data", "candle_one", "candle_five", "candle_fift
 
 MONGO_DATABASE = "stocks_new"
 LOGFILE_FOLDER = os.path.join(BASE_DIR, "logs")
+LOGFILE_PATH = os.path.join(LOGFILE_FOLDER, "backend.log")
 
 LOGGING = {
     "version": 1,

@@ -30,6 +30,7 @@ if settings.RUN_THREADS:
 
 
 shoonya_api = sapi.login()
+sapi.open_websocket()
 logger.info(f"Login status {sapi.is_loggedin}")
 
 
@@ -129,7 +130,7 @@ def download_db(request):
     download = request.GET.get("download", default="db")
     file_location = settings.BASE_DIR / 'db.sqlite3'
     if download == "logs":
-        file_location = settings.LOGFILE_FOLDER / 'backends.log'
+        file_location = settings.LOGFILE_PATH
     try:
         response = FileResponse(open(file_location, 'rb'), as_attachment=True)
     except IOError:
@@ -176,8 +177,7 @@ def show_candles(request):
 def clear_logs(request):
     confirm = request.GET.get("confirm", default="no")
     if confirm.lower() == "yes":
-        logfile = settings.LOGFILE_FOLDER / 'backends.log'
-        open(logfile, 'w').close()
+        open(settings.LOGFILE_PATH, 'w').close()
         return render(request, "api_login.html", context={"message": "Log file cleared.."})
     return redirect("/")
 
