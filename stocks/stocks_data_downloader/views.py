@@ -152,7 +152,7 @@ def shoonya_login(request):
     except AttributeError:
         pass
     sapi.login()
-    sapi.open_websocket()
+    # sapi.open_websocket()
     logger.info("Loggedin to api from endpoint /api-login")
     return render(request, "api_login.html", context={"message": "Logged in to shoonya api"})
 
