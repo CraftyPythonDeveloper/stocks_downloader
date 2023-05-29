@@ -12,7 +12,7 @@ import logging
 from datetime import datetime, timedelta
 from urllib import error, request
 from stocks_data_downloader.models import DailySubscribe, SubscribedData
-from utils.shoonya_api import sapi
+from utils.shoonya_api import sapi, shoonya_refresh
 from utils.make_candles import is_working_hr
 import os
 
@@ -63,13 +63,17 @@ def subscribe_unsubscribe_market():
         return
     if datetime.now().replace(hour=9, minute=14, second=0) <= datetime.now() <=\
             datetime.now().replace(hour=9, minute=16, second=0):
+    # if datetime.now().replace(hour=23, minute=55, second=0) <= datetime.now() <= \
+    #         datetime.now().replace(hour=23, minute=56, second=0):
         logger.info("Market is open...")
         unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
         sub = DailySubscribe.objects.filter(unix_time=unix_time).last()
         if not sub:
-            ticks = SubscribedData.objects.filter(status=True)
+            shoonya_refresh()
+            logger.info("Opened websocket..")
+            ticks = SubscribedData.objects.filter(is_active=True)
             for t in ticks:
-                sapi.subscribe_wsticks(t.tick)
+                sapi.subscribe_wsticks(t.token)
             update_status = DailySubscribe(unix_time=unix_time, subscribe=True)
             update_status.save()
             logger.info(f"Market is open auto-subscribed to all {len(ticks)} active ticks")
@@ -77,15 +81,19 @@ def subscribe_unsubscribe_market():
         logger.info("Already auto-subscribed ticks. Skipping...")
         return
     elif datetime.now().replace(hour=15, minute=30, second=0) <= datetime.now() <=\
-            datetime.now().replace(hour=15, minute=31, second=0):
+            datetime.now().replace(hour=15, minute=32, second=0):
+    # elif datetime.now().replace(hour=23, minute=58, second=0) <= datetime.now() <= \
+    #      datetime.now().replace(hour=23, minute=59, second=0):
         # unsubscribe all ticks
         logger.info("Market is closed...")
         unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
         sub = DailySubscribe.objects.filter(unix_time=unix_time, subscribe=True, unsubscribe=False).last()
         if sub:
-            ticks = SubscribedData.objects.filter(status=True)
+            ticks = SubscribedData.objects.filter(is_active=True)
             for t in ticks:
-                sapi.unsubscribe_wsticks(t.tick)
+                sapi.unsubscribe_wsticks(t.token)
+            shoonya_refresh("logout")
+            logger.info("Closed websocket..")
             sub.unsubscribe = True
             sub.save()
             logger.info(f"Market is closed auto-unsubscribed to all {len(ticks)} active ticks")
@@ -121,20 +129,22 @@ def upload_to_gofile_bucket(filepath, filename):
     return
 
 
-def upload_logs(previous_time):
-    if not previous_time + timedelta(hours=3) <= datetime.now().replace(minute=0, second=0, microsecond=0):
+def upload_logs(previous_time, timeframe):
+    if not previous_time + timedelta(hours=timeframe) <= datetime.now().replace(minute=0, second=0, microsecond=0):
         return previous_time
     # copy/clear/send
     try:
         log_name = datetime.now().strftime("backend_%d-%m-%Y_%H-%M.log")
         src = os.path.join(settings.LOGFILE_FOLDER, "backend.log")
         dest = os.path.join(settings.LOGFILE_FOLDER, log_name)
-        shutil.copy(src, dest)
-        open(src, 'w').close()
-        upload_to_gofile_bucket(dest, log_name)
+        file_loc = shutil.copy(src, dest)
+        with open(file_loc, 'rb') as fp:
+            data = fp.read()
+        upload_to_gofile_bucket(filepath=data, filename=log_name)
         logger.info("Log file uploaded successfully")
+        open(src, 'w').close()
         os.remove(dest)
-        return previous_time + timedelta(hours=3)
+        return previous_time + timedelta(hours=timeframe)
     except Exception:
         logger.exception("Exception occured in upload_logs().. ")
         return previous_time
@@ -146,9 +156,8 @@ def migrate_tables(interval):
         try:
             migrate_table()
             subscribe_unsubscribe_market()
-            go_file_start_time = upload_logs(go_file_start_time)
+            go_file_start_time = upload_logs(go_file_start_time, timeframe=3)
             self_ping()
         except Exception:
             logger.exception("Exception in db_migrations..")
-
         time.sleep(interval)

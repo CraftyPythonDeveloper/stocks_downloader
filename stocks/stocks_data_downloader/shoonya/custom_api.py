@@ -105,11 +105,16 @@ class ShoonyaAPI:
     def close_websocket(self):
         if self.is_loggedin:
             self.api.close_websocket()
+            self.is_feed_opened = False
             logger.info("Closing the websocket connection to shoonya api")
+            return True
+        logger.info("Seems user is not logged in..")
+        return False
 
     def subscribe_wsticks(self, tick, exchange="NSE"):
         if self.is_feed_opened:
             self.api.subscribe(f"{exchange}|{tick}")
+            logger.info(f'Subscribed to {f"{exchange}|{tick}"}')
             return True
         logger.error("websocket not running to shoonya api, start the websocket first by calling "
                      "start_websocket() method..")

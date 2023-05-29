@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponseNotFound, FileResponse
 from .models import SubscribedData, WebSocketData
 from utils.decorators import allowed_methods
 from utils.threadings import LIST_OF_THREADS
-from utils.make_candles import CANDLE_TIMEFRAMES
+from utils.make_candles import CANDLE_TIMEFRAMES, is_working_hr
 from utils.shoonya_api import sapi
 from django.conf import settings
 import logging
@@ -30,7 +30,6 @@ if settings.RUN_THREADS:
 
 
 shoonya_api = sapi.login()
-sapi.open_websocket()
 logger.info(f"Login status {sapi.is_loggedin}")
 
 
@@ -69,11 +68,18 @@ def subscribe_token(request):
     if token == "all":
         subscribed_tokens = SubscribedData.objects.filter(status=True)
         logger.info(f"Subscribing all {len(subscribed_tokens)} tokens")
-        for t in subscribed_tokens:
-            sapi.subscribe_wsticks(t.token)
-        logger.info(f"Subscribed all {len(subscribed_tokens)} tokens")
+        if is_working_hr():
+            for t in subscribed_tokens:
+                sapi.subscribe_wsticks(t.token)
+            logger.info(f"Subscribed all {len(subscribed_tokens)} tokens")
+        else:
+            logger.info("Not a working hr.. Skipping subscribe token..")
         return redirect("/")
-    subscribe = sapi.subscribe_wsticks(token)
+    if is_working_hr():
+        subscribe = sapi.subscribe_wsticks(token)
+    else:
+        subscribe = True
+        logger.info("Not a working hr. Skipping single subscribe token..")
     if not subscribe:
         logger.error(f"Error while subscribing token {token}. Please try again..")
         return JsonResponse({"message": f"Error while subscribing token {token}. Please try again.."})
