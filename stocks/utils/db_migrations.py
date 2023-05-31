@@ -24,7 +24,7 @@ db = mongo_conn[settings.MONGO_DATABASE]
 
 
 def mongo_get_latest_id(collection_name):
-    record = db[collection_name].find_one(sort=[("_id", DESCENDING)])
+    record = db[collection_name].find_one(sort=[("id", DESCENDING)])
     if record:
         return record["id"], record["unix_time"]
     return 0, 0
