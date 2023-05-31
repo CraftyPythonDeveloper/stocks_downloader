@@ -6,6 +6,7 @@ from django.apps import apps
 from django.conf import settings
 from decouple import config
 from pymongo import MongoClient, DESCENDING
+from pymongo.errors import BulkWriteError
 import time
 from django.db.models import Q
 import logging
@@ -61,45 +62,53 @@ def self_ping():
 def subscribe_unsubscribe_market():
     if not is_working_hr():
         return
-    if datetime.now().replace(hour=9, minute=14, second=0) <= datetime.now() <=\
-            datetime.now().replace(hour=9, minute=16, second=0):
-    # if datetime.now().replace(hour=23, minute=55, second=0) <= datetime.now() <= \
-    #         datetime.now().replace(hour=23, minute=56, second=0):
-        logger.info("Market is open...")
-        unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
-        sub = DailySubscribe.objects.filter(unix_time=unix_time).last()
-        if not sub:
-            shoonya_refresh()
-            logger.info("Opened websocket..")
-            ticks = SubscribedData.objects.filter(is_active=True)
-            for t in ticks:
-                sapi.subscribe_wsticks(t.token)
-            update_status = DailySubscribe(unix_time=unix_time, subscribe=True)
-            update_status.save()
-            logger.info(f"Market is open auto-subscribed to all {len(ticks)} active ticks")
+    try:
+        if datetime.now().replace(hour=9, minute=14, second=0) <= datetime.now() <=\
+                datetime.now().replace(hour=9, minute=16, second=0):
+        # if datetime.now().replace(hour=23, minute=55, second=0) <= datetime.now() <= \
+        #         datetime.now().replace(hour=23, minute=56, second=0):
+            logger.info("Market is open...")
+            unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
+            sub = DailySubscribe.objects.filter(unix_time=unix_time).last()
+            if not sub:
+                shoonya_refresh()
+                logger.info("Opened websocket..")
+                ticks = SubscribedData.objects.filter(is_active=True)
+                for t in ticks:
+                    sapi.subscribe_wsticks(t.token)
+                update_status = DailySubscribe(unix_time=unix_time, subscribe=True)
+                update_status.save()
+                logger.info(f"Market is open auto-subscribed to all {len(ticks)} active ticks")
+                return
+            logger.info("Already auto-subscribed ticks. Skipping...")
             return
-        logger.info("Already auto-subscribed ticks. Skipping...")
-        return
-    elif datetime.now().replace(hour=15, minute=30, second=0) <= datetime.now() <=\
-            datetime.now().replace(hour=15, minute=32, second=0):
-    # elif datetime.now().replace(hour=23, minute=58, second=0) <= datetime.now() <= \
-    #      datetime.now().replace(hour=23, minute=59, second=0):
-        # unsubscribe all ticks
-        logger.info("Market is closed...")
-        unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
-        sub = DailySubscribe.objects.filter(unix_time=unix_time, subscribe=True, unsubscribe=False).last()
-        if sub:
-            ticks = SubscribedData.objects.filter(is_active=True)
-            for t in ticks:
-                sapi.unsubscribe_wsticks(t.token)
-            shoonya_refresh("logout")
-            logger.info("Closed websocket..")
-            sub.unsubscribe = True
-            sub.save()
-            logger.info(f"Market is closed auto-unsubscribed to all {len(ticks)} active ticks")
+        elif datetime.now().replace(hour=15, minute=30, second=0) <= datetime.now() <=\
+                datetime.now().replace(hour=15, minute=32, second=0):
+        # elif datetime.now().replace(hour=23, minute=58, second=0) <= datetime.now() <= \
+        #      datetime.now().replace(hour=23, minute=59, second=0):
+            # unsubscribe all ticks
+            logger.info("Market is closed...")
+            unix_time = datetime.now().replace(hour=9, minute=14, second=0).timestamp()
+            sub = DailySubscribe.objects.filter(unix_time=unix_time, unsubscribe=True).last()
+            if not sub:
+                ticks = SubscribedData.objects.filter(is_active=True)
+                for t in ticks:
+                    sapi.unsubscribe_wsticks(t.token)
+                shoonya_refresh("logout")
+                logger.info("Closed websocket..")
+                latest_record = DailySubscribe.objects.filter(unix_time=unix_time).last()
+                if latest_record:
+                    latest_record.unsubscribe = True
+                    latest_record.save()
+                else:
+                    latest_record = DailySubscribe(unix_time=unix_time, unsubscribe=True)
+                    latest_record.save()
+                logger.info(f"Market is closed auto-unsubscribed to all {len(ticks)} active ticks")
+                return
+            logger.info("Already auto-unsubscribed ticks. Skipping...")
             return
-        logger.info("Already auto-unsubscribed ticks. Skipping...")
-        return
+    except Exception:
+        logger.exception(f"Exception occurred in subscribe_unsubscribe_market()..")
 
 
 def migrate_table():
@@ -109,7 +118,17 @@ def migrate_table():
         if not data:
             continue
         data_dict = mongo_convert_to_dict(data, latest_id)
-        db[table].insert_many(data_dict)
+        try:
+            db[table].insert_many(data_dict)
+        except BulkWriteError as e:
+            for dup_record in e.details['writeErrors']:
+                if dup_record["code"] == 11000:
+                    db[table].delete_many(dup_record["keyValue"])
+                    logger.info(f'Found duplicate {dup_record["keyValue"]}. deleting from db')
+                else:
+                    logger.exception(e)
+        except Exception:
+            logger.exception("Exception occurred while inserting data into mongo db")
 
 
 def upload_to_gofile_bucket(filepath, filename):
@@ -154,9 +173,9 @@ def migrate_tables(interval):
     go_file_start_time = datetime.now().replace(minute=0, second=0, microsecond=0)
     while True:
         try:
-            migrate_table()
             subscribe_unsubscribe_market()
             go_file_start_time = upload_logs(go_file_start_time, timeframe=3)
+            migrate_table()
             self_ping()
         except Exception:
             logger.exception("Exception in db_migrations..")

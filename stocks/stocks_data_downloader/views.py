@@ -66,20 +66,20 @@ def subscribe_token(request):
     if not token:
         return redirect("/")
     if token == "all":
-        subscribed_tokens = SubscribedData.objects.filter(status=True)
+        subscribed_tokens = SubscribedData.objects.filter(is_active=True)
         logger.info(f"Subscribing all {len(subscribed_tokens)} tokens")
-        if is_working_hr():
+        if sapi.is_feed_opened:
             for t in subscribed_tokens:
                 sapi.subscribe_wsticks(t.token)
             logger.info(f"Subscribed all {len(subscribed_tokens)} tokens")
         else:
-            logger.info("Not a working hr.. Skipping subscribe token..")
+            logger.info("Websocket feed is not open.. Skipping subscribe token..")
         return redirect("/")
-    if is_working_hr():
+    if sapi.is_feed_opened:
         subscribe = sapi.subscribe_wsticks(token)
     else:
         subscribe = True
-        logger.info("Not a working hr. Skipping single subscribe token..")
+        logger.info("Websocket feed is not open.. Skipping single subscribe token..")
     if not subscribe:
         logger.error(f"Error while subscribing token {token}. Please try again..")
         return JsonResponse({"message": f"Error while subscribing token {token}. Please try again.."})

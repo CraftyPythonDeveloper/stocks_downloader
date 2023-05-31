@@ -68,7 +68,7 @@ def draw_candle(timeframe):
             start = int(start_time.timestamp())
             end = int(datetime.now().timestamp())
             start_time = datetime.now().replace(second=0, microsecond=0)
-            logger.info(f"Getting data form {start} to {end} for {timeframe} timeframe to make candle.")
+            logger.info(f"Getting data from {start} to {end} for {timeframe} timeframe to make candle.")
             try:
                 active_ticks = SubscribedData.objects.filter(is_active=True).all()
                 time_from = datetime.fromtimestamp(start, tz=tz).strftime("%d-%m-%Y %H:%M:%S")
