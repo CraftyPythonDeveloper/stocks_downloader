@@ -1,8 +1,8 @@
 from django.db import models
 from datetime import datetime
-import pytz
+from django.conf import settings
 
-tz = pytz.timezone('Asia/kolkata')
+tz = settings.INDIAN_TIMEZONE
 
 
 class WebSocketData(models.Model):
@@ -145,12 +145,34 @@ class SchedularTable(models.Model):
     function_name = models.CharField(max_length=500)
     readable_function = models.TextField(null=True)
     serialized_function = models.BinaryField(null=True)
+    interval = models.CharField(max_length=10, null=True)
     last_run = models.IntegerField(null=True)
     next_run = models.IntegerField(null=True)
-    is_enabled = models.BooleanField(null=True)
-    run_counts = models.IntegerField(null=True)
-    successful = models.IntegerField(null=True)
-    failed = models.IntegerField(null=True)
+    is_enabled = models.BooleanField(default=True)
+    status = models.CharField(max_length=50, default="scheduled")  # (scheduled, running, stopped)
+    last_status = models.CharField(max_length=50, null=True)
+    run_counts = models.IntegerField(default=0)
+    successful = models.IntegerField(default=0)
+    failed = models.IntegerField(default=0)
+    last_run_datetime = models.CharField(max_length=50, null=True)
+    next_run_datetime = models.CharField(max_length=50, null=True)
+    function_hash = models.CharField(max_length=250, null=True)
+
+    def save(self, *args, **kwargs):
+        self.next_run_datetime = datetime.fromtimestamp(self.next_run, tz=tz).strftime("%d-%m-%Y %H:%M:%S")
+        self.last_run_datetime = datetime.fromtimestamp(self.last_run, tz=tz).strftime("%d-%m-%Y %H:%M:%S")
+        return super(SchedularTable, self).save(*args, *kwargs)
 
     class Meta:
         db_table = "schedular_table"
+
+
+class SchedularHistory(models.Model):
+    run_at = models.IntegerField(null=True)
+    status = models.CharField(max_length=50, null=True)
+    exception = models.TextField(null=True)
+    scheduler_details = models.ForeignKey(SchedularTable, on_delete=models.DO_NOTHING, null=True, blank=True,
+                                          related_name='history')
+
+    class Meta:
+        db_table = "schedular_history"

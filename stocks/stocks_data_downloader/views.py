@@ -1,10 +1,12 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseNotFound, FileResponse
-from .models import SubscribedData, WebSocketData
+from stocks_data_downloader.models import SubscribedData, WebSocketData
 from utils.decorators import allowed_methods
-from utils.threadings import LIST_OF_THREADS
-from utils.make_candles import CANDLE_TIMEFRAMES, is_working_hr
+from utils.threadings import LIST_OF_THREADS, run_thread
 from utils.shoonya_api import sapi
+from utils.initial_run_functions import register_all_functions_to_schedular, auto_subscribe_on_run
+from utils.misc import subscribe_all_tokens
+from utils.scheduler_functions import CANDLE_TIMEFRAMES
 from django.conf import settings
 import logging
 from django.contrib.auth.decorators import login_required
@@ -16,16 +18,11 @@ logger = logging.getLogger(__name__)
 running_threads = LIST_OF_THREADS
 # run threads
 if settings.RUN_THREADS:
-    logger.info("Running threads in background..")
+    # Register all functions to schedular on initial run
+    register_all_functions_to_schedular()
+    auto_subscribe_on_run()
 
-    def run_thread(thread):
-        try:
-            thread.start()
-            logger.info(f"Started running thread {thread.name} in background..")
-            return thread
-        except RuntimeError:
-            logger.error(f"Thread {thread.name} is already running..")
-            return thread
+    logger.info("Running threads in background..")
     running_threads = [run_thread(t) for t in LIST_OF_THREADS if not t.is_alive()]
 
 
@@ -66,14 +63,7 @@ def subscribe_token(request):
     if not token:
         return redirect("/")
     if token == "all":
-        subscribed_tokens = SubscribedData.objects.filter(is_active=True)
-        logger.info(f"Subscribing all {len(subscribed_tokens)} tokens")
-        if sapi.is_feed_opened:
-            for t in subscribed_tokens:
-                sapi.subscribe_wsticks(t.token)
-            logger.info(f"Subscribed all {len(subscribed_tokens)} tokens")
-        else:
-            logger.info("Websocket feed is not open.. Skipping subscribe token..")
+        subscribe_all_tokens()
         return redirect("/")
     if sapi.is_feed_opened:
         subscribe = sapi.subscribe_wsticks(token)

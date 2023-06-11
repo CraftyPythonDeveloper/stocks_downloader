@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+
+import pytz
 from decouple import config
 import os
 
@@ -146,8 +148,6 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-RUN_THREADS = True
-
 TABLES_TO_MIGRATE = ["websocket_data", "candle_one", "candle_five", "candle_fifteen", "candle_thirty",
                      "candle_sixty"]
 
@@ -171,7 +171,7 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "ERROR",
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
@@ -199,3 +199,7 @@ LOGGING = {
 }
 
 LOGIN_URL = "login"
+
+RUN_THREADS = True
+SCHEDULAR_INTERVAL = 10
+INDIAN_TIMEZONE = pytz.timezone('Asia/kolkata')

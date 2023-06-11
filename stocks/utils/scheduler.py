@@ -1,18 +1,34 @@
-import inspect
-import textwrap
+import time
+from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
+import logging
+from django.conf import settings
+
+from stocks_data_downloader.models import SchedularTable
+from utils.misc import run_n_update_task
 
 
-def convert_function_to_text(func):
-    source, _ = inspect.getsourcelines(func)
-    return textwrap.dedent(''.join(source))
+logger = logging.getLogger(__name__)
 
 
-def misc_schedular():
-    pass
-    # query db every 30 sec
-    # check for timestamp col and see if any task needs to run
-    # if current timestamp >= record timestamp, send task to run_in_thread function
-    # run_in_thread function will take function as arg, next_run_time in timestamp,
-    # run it, wait for the task to complete then call join. update schedular table
-    # schedular table will have columns, function_name, serialized_function, readable_function last_run, next_run,
-    # interval_in_minutes, is_enabled, run_counts
+def run_schedular():
+    while True:
+        try:
+            st = time.time()
+            unix_now = datetime.now(tz=settings.INDIAN_TIMEZONE).timestamp()
+            tasks_to_run = SchedularTable.objects.filter(is_enabled=True, next_run__lte=unix_now)
+            if tasks_to_run:
+                logger.info(f"Number of tasks to run {len(tasks_to_run)}")
+            with ThreadPoolExecutor(max_workers=50) as executor:
+                for task in tasks_to_run:
+                    executor.submit(run_n_update_task, task)
+            finish_time = time.time() - st
+            if tasks_to_run:
+                logger.info(f"Took {finish_time} seconds to run {len(tasks_to_run)} tasks.")
+            if finish_time > 1:
+                time.sleep(settings.SCHEDULAR_INTERVAL - finish_time)
+            else:
+                time.sleep(2)
+        except Exception:
+            logger.exception("Exception in main schedular")
+            time.sleep(2)
