@@ -1,4 +1,5 @@
 import logging
+import time
 from datetime import datetime, timedelta
 import inspect
 import textwrap
@@ -206,3 +207,12 @@ def subscribe_all_tokens():
         logger.info(f"Subscribed all {len(subscribed_tokens)} tokens")
     else:
         logger.info("Websocket feed is not open.. Skipping subscribe token..")
+
+
+def send_telegram_msg(msg):
+    for i in range(5):
+        response = requests.get(settings.TELEGRAM_MSG_API + msg)
+        if response.ok:
+            return True
+        time.sleep(1)
+    return False

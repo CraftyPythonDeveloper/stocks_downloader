@@ -1,6 +1,8 @@
+from datetime import datetime
+
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseNotFound, FileResponse
-from stocks_data_downloader.models import SubscribedData, WebSocketData
+from stocks_data_downloader.models import SubscribedData, WebSocketData, StockWatcher, WatcherHistory
 from utils.decorators import allowed_methods
 from utils.threadings import LIST_OF_THREADS, run_thread
 from utils.shoonya_api import sapi
@@ -11,6 +13,13 @@ from django.conf import settings
 import logging
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
+from django.template.defaulttags import register
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +217,7 @@ def get_running_threads(request):
 
 
 @allowed_methods(["GET"])
+@login_required
 def websocket_ops(request):
     ops = request.GET.get("ops")
     if ops == "open":
@@ -220,3 +230,52 @@ def websocket_ops(request):
         return JsonResponse({"message": "Websocket is closed.."})
     logger.info(f"Either ops param missing or not valid.. {ops}")
     return JsonResponse({"message", "Either ops param missing or not valid.."})
+
+
+@allowed_methods(["GET", "POST"])
+@login_required
+def watch_list(request):
+    if request.method == "POST":
+        token = request.POST.get("token")
+        price_low = request.POST.get("price_low")
+        price_high = request.POST.get("price_high")
+        if token and price_low and price_high:
+            try:
+                price_low = float(price_low)
+                price_high = float(price_high)
+            except ValueError:
+                return JsonResponse(data={"message": "Unable to parse low and high price.."})
+            old_data = StockWatcher.objects.filter(symbol__token=token, is_active=True).first()
+            if old_data:
+                old_data.price_low = price_low
+                old_data.price_high = price_high
+                old_data.save()
+            else:
+                token_data = SubscribedData.objects.filter(token=token).first()
+                watcher = StockWatcher(symbol=token_data, price_low=price_low, price_high=price_high)
+                watcher.save()
+        return redirect("/watch-list")
+    else:
+        all_subscribed_stocks = SubscribedData.objects.filter(is_active=True)
+        all_watchlist_stocks = StockWatcher.objects.filter(is_active=True)
+        ltp_data = {}
+        for symbol_data in all_subscribed_stocks:
+            latest_price = WebSocketData.objects.filter(tick=symbol_data.token).exclude(ltp=None).last()
+            if not latest_price:
+                ltp_data[symbol_data.token] = 0
+                continue
+            ltp_data[symbol_data.token] = latest_price.ltp
+
+        data = {"stocks_data": all_subscribed_stocks, "watchlist_data": all_watchlist_stocks, "ltp_data": ltp_data}
+        return render(request, "watch_list.html", context=data)
+
+
+def del_watch_list(request):
+    token = request.GET.get("token")
+    ltp = WebSocketData.objects.filter(tick=token).last()
+    stock = StockWatcher.objects.filter(symbol__token=token, is_active=True).last()
+    history = WatcherHistory(stock=stock, ltp=ltp.ltp, unix_time=datetime.now(tz=settings.INDIAN_TIMEZONE).timestamp())
+    stock.is_active = False
+    history.save()
+    stock.save()
+    return redirect("/watch-list")

@@ -171,7 +171,7 @@ LOGGING = {
     },
     "handlers": {
         "console": {
-            "level": "INFO",
+            "level": "ERROR",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
         },
@@ -203,3 +203,5 @@ LOGIN_URL = "login"
 RUN_THREADS = True
 SCHEDULAR_INTERVAL = 10
 INDIAN_TIMEZONE = pytz.timezone('Asia/kolkata')
+TELEGRAM_MSG_API = f"https://api.telegram.org/bot{config('TELEGRAM_BOT_TOKEN')}/sendMessage?chat_id=" \
+                   f"{config('TELEGRAM_GROUP_ID')}&text="

@@ -176,3 +176,27 @@ class SchedularHistory(models.Model):
 
     class Meta:
         db_table = "schedular_history"
+
+
+class StockWatcher(models.Model):
+    symbol = models.ForeignKey(SubscribedData, on_delete=models.DO_NOTHING)
+    price_low = models.FloatField()
+    price_high = models.FloatField()
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "stock_watcher"
+
+
+class WatcherHistory(models.Model):
+    stock = models.ForeignKey(StockWatcher, on_delete=models.DO_NOTHING)
+    ltp = models.FloatField()
+    unix_time = models.IntegerField()
+    date_time = models.CharField(max_length=50, null=True)
+
+    def save(self, *args, **kwargs):
+        self.date_time = datetime.fromtimestamp(self.unix_time, tz=tz).strftime("%d-%m-%Y %H:%M:%S")
+        return super(WatcherHistory, self).save(*args, **kwargs)
+
+    class Meta:
+        db_table = "watcher_history"

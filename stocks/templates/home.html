@@ -17,6 +17,7 @@
   <section id="stock">
     <div class="container-fluid">
       <h2 class="text-center mb-5">Stock List</h2>
+      <p><a href="{% url 'subscribe-token' %}?token=all">Re-Subscribe All Tokens</a></p>
       <div class="table-responsive">
         <table class="table table-striped" id="stock-table">
           <thead>
@@ -25,7 +26,7 @@
               <th>Exchange</th>
               <th>Symbol</th>
               <th>CName</th>
-              <th>Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -35,14 +36,15 @@
               <td>{{record.exchange}}</td>
               <td>{{record.symbol}}</td>
               <td>{{record.cname}}</td>
-              <td><a href="/unsubscribe-token?token={{record.token}}">UnSubscribe</a> /
-                  <a href="/subscribe-token?token={{record.token}}">ReSubscribe</a></td>
+              <td><a href="{% url 'unsubscribe-token' %}?token={{record.token}}">UnSubscribe</a> /
+                  <a href="{% url 'subscribe-token' %}?token={{record.token}}">ReSubscribe</a>
+              </td>
             </tr>
           {% endfor %}
           </tbody>
         </table>
       </div>
-      <form id="search-form" method="get" action="/search-symbol">
+      <form id="search-form" method="get" action="{% url 'search-symbol' %}">
         <div class="input-group mb-3">
           <input type="text" class="form-control" id="searchInput" name="symbol" placeholder="Search symbol...">
           <div class="input-group-append">
@@ -70,7 +72,7 @@
                   <td>{{record.token}}</td>
                   <td>{{record.tsym}}</td>
                   <td>{{record.cname}}</td>
-                  <td><a href="/subscribe-token?token={{ record.token }}">Subscribe</a></td>
+                  <td><a href="{% url '/subscribe-token' %}?token={{ record.token }}">Subscribe</a></td>
                 </tr>
               {% endfor %}
             {% else %}

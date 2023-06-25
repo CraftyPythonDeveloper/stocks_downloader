@@ -1,19 +1,23 @@
 import logging
 import os
 import shutil
+import time
 from datetime import datetime, timedelta
 from django.conf import settings
 import requests
 from pymongo.errors import BulkWriteError
+from urllib.parse import quote_plus
 
 from django.apps import apps
 from django.db.models import Q
-from utils.misc import is_working_hr, upload_to_gofile_bucket, get_ohlvc, mongo_convert_to_dict, \
-    mongo_get_latest_id
+from utils.misc import (is_working_hr, upload_to_gofile_bucket, get_ohlvc, mongo_convert_to_dict, \
+    mongo_get_latest_id, send_telegram_msg)
 from stocks_data_downloader.models import (SubscribedData, WebSocketData, DailySubscribe, CandleOne, CandleFive,
                                                   CandleFifteen, CandleThirty, CandleSixty)
 from utils.mongo_conn import db
 from utils.shoonya_api import sapi, shoonya_refresh
+
+from stocks_data_downloader.models import WatcherHistory, StockWatcher
 
 logger = logging.getLogger(__name__)
 CANDLE_TIMEFRAMES = {1: CandleOne, 5: CandleFive, 15: CandleFifteen, 30: CandleThirty, 60: CandleSixty}
@@ -23,9 +27,9 @@ valid_tables = [table for table in tables_to_migrate if table in models.keys()]
 
 
 def draw_candle_v2(**kwargs):
-    task_instance = kwargs.get("task_instance")
     if not is_working_hr():
         return
+    task_instance = kwargs.get("task_instance")
     timeframe = int(task_instance.interval[:-1])
     active_ticks = SubscribedData.objects.filter(is_active=True).all()
     time_from = datetime.fromtimestamp(task_instance.last_run, tz=settings.INDIAN_TIMEZONE).strftime("%d-%m-%Y %H:%M:%S")
@@ -117,6 +121,8 @@ def subscribe_unsubscribe_market(**kwargs):
 
 
 def migrate_table(**kwargs):
+    if not is_working_hr():
+        return
     for table in valid_tables:
         latest_id, unix_time = mongo_get_latest_id(table)
         data = models[table].objects.filter(Q(id__gt=latest_id) | Q(unix_time__gt=unix_time)).order_by("id")
@@ -143,3 +149,39 @@ def purge_old_data(**kwargs):
         results = db[table_name].remove({"unix_time": {"$lt": old_dt.timestamp()}})
         logger.info(f"Deleted old data from {table_name} table. Data older than {old_dt.strftime('%d-%m-%Y')}. "
                     f"Total number of rows deleted {results['n']}")
+
+
+def stock_watcher():
+    while True:
+        if not sapi.is_feed_opened:
+            time.sleep(30)
+            return
+        try:
+            stocks_to_watch = StockWatcher.objects.filter(is_active=True)
+            for stock in stocks_to_watch:
+                if not stock.symbol.is_active:
+                    stock.is_active = False
+                    stock.save()
+                    continue
+                data = WebSocketData.objects.filter(tick=stock.symbol.token).exclude(ltp=None).last()
+                if stock.price_low < data.ltp < stock.price_high:
+                    # send telegram alert
+                    msg = f"Your stock {stock.symbol.symbol} is in range of your watchlist. \n CURRENT PRICE ==> " \
+                          f"{data.ltp} \n PRICE RANGE ==> {stock.price_low} TO {stock.price_high}. \n"
+                    result = send_telegram_msg(quote_plus(msg))
+                    if not result:
+                        logger.error("unable to send msg to telegram group..")
+                        time.sleep(1)
+                        continue
+                    logger.info(f"Target price for {data.tick} with price {data.ltp} is in range of {stock.price_low} "
+                                f"to {stock.price_high}")
+                    history = WatcherHistory(stock=stock, ltp=data.ltp,
+                                             unix_time=datetime.now(tz=settings.INDIAN_TIMEZONE).timestamp())
+                    stock.is_active = False
+                    history.save()
+                    stock.save()
+                time.sleep(1)
+        except Exception:
+            logger.exception("Exception in stock watcher thread..")
+            time.sleep(1)
+

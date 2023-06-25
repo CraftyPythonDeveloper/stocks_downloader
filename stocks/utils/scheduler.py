@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import logging
 from django.conf import settings
 
-from stocks_data_downloader.models import SchedularTable
+from stocks_data_downloader.models import SchedularTable, StockWatcher, WebSocketData, WatcherHistory
 from utils.misc import run_n_update_task
 
 
@@ -25,7 +25,7 @@ def run_schedular():
             finish_time = time.time() - st
             if tasks_to_run:
                 logger.info(f"Took {finish_time} seconds to run {len(tasks_to_run)} tasks.")
-            if finish_time > 1:
+            if finish_time > 1 <= (settings.SCHEDULAR_INTERVAL - finish_time):
                 time.sleep(settings.SCHEDULAR_INTERVAL - finish_time)
             else:
                 time.sleep(2)
