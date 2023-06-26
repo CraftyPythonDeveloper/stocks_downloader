@@ -211,8 +211,12 @@ def subscribe_all_tokens():
 
 def send_telegram_msg(msg):
     for i in range(5):
-        response = requests.get(settings.TELEGRAM_MSG_API + msg)
+        logger.info(f"sending alter to telegram.. -- {msg}")
+        url = settings.TELEGRAM_MSG_API + msg
+        response = requests.get(url, timeout=20)
         if response.ok:
+            logger.info("successfully sent the alter to telegram")
             return True
+        logger.error(f"unable to send message, trying again.. url| {url}")
         time.sleep(1)
     return False
