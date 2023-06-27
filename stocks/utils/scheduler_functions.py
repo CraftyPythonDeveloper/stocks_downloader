@@ -153,7 +153,7 @@ def purge_old_data(**kwargs):
 
 def stock_watcher():
     while True:
-        if not sapi.is_feed_opened:
+        if not is_working_hr():
             time.sleep(30)
             return
         try:
