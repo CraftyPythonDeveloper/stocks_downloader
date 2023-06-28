@@ -33,17 +33,17 @@
           <tbody>
           {% for record in watchlist_data %}
             <tr>
-              <td>{{record.symbol.token}}</td>
-              <td>{{record.symbol.symbol}}</td>
+              <td>{{record.tick_id}}</td>
+              <td>{{record.tick.symbol}}</td>
               <td>{{record.price_low}}</td>
               <td>{{record.price_high}}</td>
-              <td>{{ ltp_data|get_item:record.symbol.token }}</td>
-              <td><button value="{{record.pk}}__{{record.symbol.token}}__{{record.symbol.symbol}}__{{ ltp_data|get_item:record.symbol.token }}__{{record.price_low}}__{{record.price_high}}"
+              <td>{{ record.tick.data.last.ltp }}</td>
+              <td><button value="{{record.pk}}__{{record.tick_id}}__{{record.tick.symbol}}__{{ record.tick.data.last.ltp }}__{{record.price_low}}__{{record.price_high}}"
                            type="button" id="submitWatchListEdit" class="btn btn-link btn-sm" data-bs-toggle="modal"
                            data-bs-target="#UpdateWatcherModal" onclick="stockWatcherEdit(this)">
                 Add To Watch
               </button> /
-              <button class="btn btn-link btn-sm"><a href="{% url 'watch-list-delete' %}?token={{record.symbol.token}}">Delete</a></button>
+              <button class="btn btn-link btn-sm"><a href="{% url 'watch-list-delete' %}?id={{record.pk}}">Delete</a></button>
               </td>
             </tr>
           {% endfor %}
@@ -72,8 +72,8 @@
               <td>{{record.exchange}}</td>
               <td>{{record.symbol}}</td>
               <td>{{record.cname}}</td>
-              <td>{{ ltp_data|get_item:record.token }}</td>
-               <td><button value="{{record.token}}__{{record.symbol}}__{{ ltp_data|get_item:record.token }}"
+              <td>{{ record.data.last.ltp }}</td>
+               <td><button value="{{record.token}}__{{record.symbol}}__{{ record.data.last.ltp}}"
                            type="button" id="submitWatchListAdd" class="btn btn-link btn-sm" data-bs-toggle="modal"
                            data-bs-target="#AddStockWatcher" onclick="stockWatcher(this)">
                 Add To Watch

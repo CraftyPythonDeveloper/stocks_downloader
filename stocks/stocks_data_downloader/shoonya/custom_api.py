@@ -20,7 +20,7 @@ def insert_into_database(model, data):
                 old.volume = int(data["v"])
             old.save()
             return old
-        new = model(tick=int(data.get("tk")), unix_time=int(data.get("ft")))
+        new = model(tick_id=int(data.get("tk")), unix_time=int(data.get("ft")))
         if data.get("lp"):
             new.ltp = float(data["lp"])
         if data.get("v"):

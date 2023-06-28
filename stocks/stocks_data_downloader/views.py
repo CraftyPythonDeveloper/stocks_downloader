@@ -1,5 +1,8 @@
+import json
 from datetime import datetime
 
+from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import F
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseNotFound, FileResponse
 from stocks_data_downloader.models import SubscribedData, WebSocketData, StockWatcher, WatcherHistory
@@ -23,7 +26,6 @@ def get_item(dictionary, key):
 
 logger = logging.getLogger(__name__)
 
-
 running_threads = LIST_OF_THREADS
 # run threads
 if settings.RUN_THREADS:
@@ -33,7 +35,6 @@ if settings.RUN_THREADS:
 
     logger.info("Running threads in background..")
     running_threads = [run_thread(t) for t in LIST_OF_THREADS if not t.is_alive()]
-
 
 shoonya_api = sapi.login()
 logger.info(f"Login status {sapi.is_loggedin}")
@@ -126,7 +127,7 @@ def live_data(request):
         data = WebSocketData.objects.filter(tick=tick).order_by("-unix_time")[:limit]
     else:
         data = WebSocketData.objects.all().order_by("-unix_time")[:limit]
-    return render(request, "live_data.html", context={"latest_data": data},)
+    return render(request, "live_data.html", context={"latest_data": data}, )
 
 
 @allowed_methods(["GET"])
@@ -159,6 +160,18 @@ def shoonya_login(request):
 @allowed_methods(["GET"])
 @login_required
 def show_candles(request):
+    """
+    API to fetch candle data,
+    parameters:
+    timeframe: (1,5,15,30,60). default 1
+    limit: default 50 records
+    # ordering: default descending
+    from: unix_time to filter data, default last 50 records
+    to: unix_time to filter data
+    tick: token to filter specific stock
+    """
+    filters = {}
+    valid_timeframes = ("1", "5", "15", "30", "60")
     limit = 200
     timeframe = 1
     tick = request.GET.get("tick")
@@ -167,12 +180,20 @@ def show_candles(request):
     if rows:
         limit = int(rows)
     if time_interval:
+        if time_interval not in valid_timeframes:
+            return JsonResponse({"message": False, "results": []})
         timeframe = int(time_interval)
     if tick:
-        tick = int(tick)
-        data = CANDLE_TIMEFRAMES[timeframe].objects.filter(Tick=tick).order_by("-unix_time")[:limit]
-    else:
-        data = CANDLE_TIMEFRAMES[timeframe].objects.all().order_by("-unix_time")[:limit]
+        filters["tick"] = int(tick)
+    if request.GET.get("from"):
+        filters["unix_time__gte"] = request.GET.get("from")
+    if request.GET.get("to"):
+        filters["unix_time__lt"] = request.GET.get("to")
+
+    data = CANDLE_TIMEFRAMES[timeframe].objects.filter(*filters).order_by("-unix_time")[:limit]
+    # data = CANDLE_TIMEFRAMES[timeframe].objects.annotate(symbol=F('tick__symbol')).filter().order_by("-unix_time") \
+    #     [:limit]
+    # return JsonResponse(dict(data=list(data.values())))
 
     return render(request, "candles.html", context={"latest_data": data})
 
@@ -245,37 +266,55 @@ def watch_list(request):
                 price_high = float(price_high)
             except ValueError:
                 return JsonResponse(data={"message": "Unable to parse low and high price.."})
-            old_data = StockWatcher.objects.filter(symbol__token=token, is_active=True).first()
+            old_data = StockWatcher.objects.filter(tick=token, is_active=True).first()
             if old_data:
                 old_data.price_low = price_low
                 old_data.price_high = price_high
                 old_data.save()
             else:
-                token_data = SubscribedData.objects.filter(token=token).first()
-                watcher = StockWatcher(symbol=token_data, price_low=price_low, price_high=price_high)
+                # token_data = SubscribedData.objects.filter(token=token).first()
+                watcher = StockWatcher(tick_id=token, price_low=price_low, price_high=price_high)
                 watcher.save()
         return redirect("/watch-list")
     else:
         all_subscribed_stocks = SubscribedData.objects.filter(is_active=True)
         all_watchlist_stocks = StockWatcher.objects.filter(is_active=True)
-        ltp_data = {}
-        for symbol_data in all_subscribed_stocks:
-            latest_price = WebSocketData.objects.filter(tick=symbol_data.token).exclude(ltp=None).last()
-            if not latest_price:
-                ltp_data[symbol_data.token] = 0
-                continue
-            ltp_data[symbol_data.token] = latest_price.ltp
+        # ltp_data = {}
+        # for symbol_data in all_subscribed_stocks:
+        #     latest_price = WebSocketData.objects.filter(tick=symbol_data.token).exclude(ltp=None).last()
+        #     if not latest_price:
+        #         ltp_data[symbol_data.token] = 0
+        #         continue
+        #     ltp_data[symbol_data.token] = latest_price.ltp
 
-        data = {"stocks_data": all_subscribed_stocks, "watchlist_data": all_watchlist_stocks, "ltp_data": ltp_data}
+        data = {"stocks_data": all_subscribed_stocks, "watchlist_data": all_watchlist_stocks}
         return render(request, "watch_list.html", context=data)
 
 
+@login_required()
 def del_watch_list(request):
-    token = request.GET.get("token")
-    ltp = WebSocketData.objects.filter(tick=token).last()
-    stock = StockWatcher.objects.filter(symbol__token=token, is_active=True).last()
-    history = WatcherHistory(stock=stock, ltp=ltp.ltp, unix_time=datetime.now(tz=settings.INDIAN_TIMEZONE).timestamp())
+    pk = request.GET.get("id")
+    # ltp = WebSocketData.objects.filter(tick=token).last()
+    stock = StockWatcher.objects.get(pk=pk)
+    history = WatcherHistory(stock=stock, ltp=stock.tick.data.last().ltp,
+                             unix_time=datetime.now(tz=settings.INDIAN_TIMEZONE).timestamp())
     stock.is_active = False
     history.save()
     stock.save()
     return redirect("/watch-list")
+
+# @allowed_methods(["GET"])
+# def get_data(request):
+#     """
+#     API to fetch candle data,
+#     parameters:
+#     timeframe: (1,5,15,30,60). default 1
+#     limit: default 50 records
+#     ordering: default descending
+#     from: unix_time to filter data, default last 50 records
+#     to: unix_time to filter data
+#     tick: token to filter specific stock
+#     """
+#     data = request.GET
+#     filters = {}
+#     if data.get("")

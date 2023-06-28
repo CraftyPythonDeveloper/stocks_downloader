@@ -36,8 +36,10 @@ def draw_candle_v2(**kwargs):
     time_to = datetime.fromtimestamp(task_instance.next_run, tz=settings.INDIAN_TIMEZONE).strftime('%d-%m-%Y %H:%M:%S')
     logger.info(f"Making candle of {timeframe} minutes from {time_from} to {time_to}")
     for tick in active_ticks:
-        queryset = WebSocketData.objects.filter(tick=tick.token, unix_time__gte=task_instance.last_run,
-                                                unix_time__lt=task_instance.next_run).order_by("unix_time")
+        # queryset = WebSocketData.objects.filter(tick=tick.token, unix_time__gte=task_instance.last_run,
+        #                                         unix_time__lt=task_instance.next_run).order_by("unix_time")
+        queryset = tick.data.filter(unix_time__gte=task_instance.last_run,
+                                    unix_time__lt=task_instance.next_run).order_by("unix_time")
         if queryset:
             candle = get_ohlvc(queryset=queryset, meta=tick, close_at=task_instance.last_run)
             candle_obj = CANDLE_TIMEFRAMES[timeframe](**candle)
@@ -159,16 +161,17 @@ def stock_watcher():
         try:
             stocks_to_watch = StockWatcher.objects.filter(is_active=True)
             for stock in stocks_to_watch:
-                if not stock.symbol.is_active:
+                if not stock.tick.is_active:
                     stock.is_active = False
                     stock.save()
                     continue
-                data = WebSocketData.objects.filter(tick=stock.symbol.token).exclude(ltp=None).last()
+                data = stock.tick.data.exclude(ltp=None).last()
+                # data = WebSocketData.objects.filter(tick=stock.tick.token).exclude(ltp=None).last()
                 if stock.price_low < data.ltp < stock.price_high:
                     # send telegram alert
-                    msg = f"Your stock {stock.symbol.symbol} is in range of your watchlist. \n CURRENT PRICE ==> " \
-                          f"{data.ltp} \n PRICE RANGE ==> {stock.price_low} TO {stock.price_high}. \n"
-                    result = send_telegram_msg(quote_plus(msg))
+                    msg = f"Your stock {stock.tick.symbol} is in range of your watchlist. \n CURRENT PRICE ==> " \
+                          f"{data.ltp} \n \n PRICE RANGE ==> {stock.price_low} TO {stock.price_high}. \n"
+                    result = send_telegram_msg(msg)
                     if not result:
                         logger.error("unable to send msg to telegram group..")
                         time.sleep(1)

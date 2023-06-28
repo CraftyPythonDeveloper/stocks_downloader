@@ -26,6 +26,7 @@
               <th>Exchange</th>
               <th>Symbol</th>
               <th>CName</th>
+              <th>Last Price</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -36,6 +37,7 @@
               <td>{{record.exchange}}</td>
               <td>{{record.symbol}}</td>
               <td>{{record.cname}}</td>
+              <td>{{record.data.last.ltp}}</td>
               <td><a href="{% url 'unsubscribe-token' %}?token={{record.token}}">UnSubscribe</a> /
                   <a href="{% url 'subscribe-token' %}?token={{record.token}}">ReSubscribe</a>
               </td>
@@ -72,7 +74,7 @@
                   <td>{{record.token}}</td>
                   <td>{{record.tsym}}</td>
                   <td>{{record.cname}}</td>
-                  <td><a href="{% url '/subscribe-token' %}?token={{ record.token }}">Subscribe</a></td>
+                  <td><a href="{% url 'subscribe-token' %}?token={{ record.token }}">Subscribe</a></td>
                 </tr>
               {% endfor %}
             {% else %}

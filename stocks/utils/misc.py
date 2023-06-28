@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import inspect
 import textwrap
 import pickle
+from urllib.parse import quote_plus
+
 import requests
 
 from decouple import config
@@ -154,7 +156,7 @@ def run_n_update_task(metadata):
 
 
 def get_ohlvc(queryset, meta, close_at):
-    candle = {"Tick": meta.token, "Symbol": meta.symbol, "Open": None, "High": None, "Low": None,
+    candle = {"tick": meta, "Open": None, "High": None, "Low": None,
               "Close": None, "Volume": 0, "unix_time": close_at, "length": None}
     temp_volume = 0
     length = set()
@@ -212,7 +214,7 @@ def subscribe_all_tokens():
 def send_telegram_msg(msg):
     for i in range(5):
         logger.info(f"sending alter to telegram.. -- {msg}")
-        url = settings.TELEGRAM_MSG_API + msg
+        url = settings.TELEGRAM_MSG_API + quote_plus(msg)
         response = requests.get(url, timeout=20)
         if response.ok:
             logger.info("successfully sent the alter to telegram")
