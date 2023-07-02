@@ -5,7 +5,7 @@ from utils.scheduler_functions import (draw_candle_v2, self_ping, subscribe_unsu
 from custom_strategies.strategies import macd_strategy
 
 functions = {draw_candle_v2: ["1m", "5m", "15m", "30m", "60m"], self_ping: "1m", subscribe_unsubscribe_market: "1m",
-             upload_logs: "3h", migrate_table: "50s", purge_old_data: "1d", macd_strategy: "5m"}
+             upload_logs: "3h", migrate_table: "50s", purge_old_data: "1d", macd_strategy: "1m"}
 
 
 def register_all_functions_to_schedular():

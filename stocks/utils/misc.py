@@ -107,6 +107,7 @@ def register_function(func, interval):
     if old_schedular_task:
         old_schedular_task.last_run = last_run.timestamp()
         old_schedular_task.next_run = next_run.timestamp()
+        old_schedular_task.interval = interval
         if old_schedular_task.readable_function != function_src:
             old_schedular_task.serializer_function = pickle_func(func)
             old_schedular_task.readable_function = function_src

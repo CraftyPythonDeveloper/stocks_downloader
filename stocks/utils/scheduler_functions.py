@@ -29,7 +29,7 @@ valid_tables = [table for table in tables_to_migrate if table in models.keys()]
 def draw_candle_v2(**kwargs):
     if not is_working_hr():
         return
-    task_instance = kwargs.get("task_instance")
+    task_instance = kwargs["task_instance"]
     timeframe = int(task_instance.interval[:-1])
     active_ticks = SubscribedData.objects.filter(is_active=True).all()
     time_from = datetime.fromtimestamp(task_instance.last_run, tz=settings.INDIAN_TIMEZONE).strftime("%d-%m-%Y %H:%M:%S")
@@ -39,8 +39,9 @@ def draw_candle_v2(**kwargs):
         # queryset = WebSocketData.objects.filter(tick=tick.token, unix_time__gte=task_instance.last_run,
         #                                         unix_time__lt=task_instance.next_run).order_by("unix_time")
         queryset = tick.data.filter(unix_time__gte=task_instance.last_run,
-                                    unix_time__lt=task_instance.next_run).order_by("unix_time")
+                                    unix_time__lt=task_instance.next_run).order_by("id")
         if queryset:
+            logger.info(f"using {len(queryset)} rows to calculate {timeframe} minute candle {time_from} to {time_to}")
             candle = get_ohlvc(queryset=queryset, meta=tick, close_at=task_instance.last_run)
             candle_obj = CANDLE_TIMEFRAMES[timeframe](**candle)
             candle_obj.save()

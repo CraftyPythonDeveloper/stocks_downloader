@@ -18,4 +18,5 @@ urlpatterns = [
     path("websocket-ops/", views.websocket_ops, name="websocket-ops"),
     path("watch-list/", views.watch_list, name="watch-list"),
     path("watch-list/delete", views.del_watch_list, name="watch-list-delete"),
+    path("strategies/", views.strategies, name="strategies"),
 ]

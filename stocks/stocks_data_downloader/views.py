@@ -303,18 +303,7 @@ def del_watch_list(request):
     stock.save()
     return redirect("/watch-list")
 
-# @allowed_methods(["GET"])
-# def get_data(request):
-#     """
-#     API to fetch candle data,
-#     parameters:
-#     timeframe: (1,5,15,30,60). default 1
-#     limit: default 50 records
-#     ordering: default descending
-#     from: unix_time to filter data, default last 50 records
-#     to: unix_time to filter data
-#     tick: token to filter specific stock
-#     """
-#     data = request.GET
-#     filters = {}
-#     if data.get("")
+
+@allowed_methods(["get"])
+def strategies(request):
+    return render(request, "strategy.html")

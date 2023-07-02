@@ -1,0 +1,200 @@
+{% extends "navbar.html" %}
+
+{% block css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.3/css/dataTables.bootstrap5.min.css">
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables JavaScript -->
+<script src="https://cdn.datatables.net/1.11.3/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.3/js/dataTables.bootstrap5.min.js"></script>
+
+{% endblock %}
+
+{% block content %}
+  <section id="stock">
+    <div class="container-fluid">
+      <h2 class="text-center mb-4 mt-2">Stock Strategy</h2>
+      <p><a href="{% url 'subscribe-token' %}?token=all">Remove All Stocks Strategy</a></p>
+      <div class="table-responsive">
+        <table class="table table-striped" id="stock-watchlist">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Symbol</th>
+              <th>Low Price</th>
+              <th>High Price</th>
+              <th>Last Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for record in watchlist_data %}
+            <tr>
+              <td>{{record.tick_id}}</td>
+              <td>{{record.tick.symbol}}</td>
+              <td>{{record.price_low}}</td>
+              <td>{{record.price_high}}</td>
+              <td>{{ record.tick.data.last.ltp }}</td>
+              <td><button value="{{record.pk}}__{{record.tick_id}}__{{record.tick.symbol}}__{{ record.tick.data.last.ltp }}__{{record.price_low}}__{{record.price_high}}"
+                           type="button" id="submitWatchListEdit" class="btn btn-link btn-sm" data-bs-toggle="modal"
+                           data-bs-target="#UpdateWatcherModal" onclick="stockWatcherEdit(this)">
+                Add To Watch
+              </button> /
+              <button class="btn btn-link btn-sm"><a href="{% url 'watch-list-delete' %}?id={{record.pk}}">Delete</a></button>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <hr class="dark border-5 border-top border-dark mt-5 mb-3">
+      <h4 class="text-left">Add Stocks To Watchlist</h4>
+      <div class="table-responsive mt-5">
+        <table class="table table-striped" id="stock-table">
+          <thead>
+            <tr>
+              <th>Token</th>
+              <th>Exchange</th>
+              <th>Symbol</th>
+              <th>CName</th>
+              <th>Last Price</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for record in stocks_data %}
+            <tr>
+              <td>{{record.token}}</td>
+              <td>{{record.exchange}}</td>
+              <td>{{record.symbol}}</td>
+              <td>{{record.cname}}</td>
+              <td>{{ record.data.last.ltp }}</td>
+               <td><button value="{{record.token}}__{{record.symbol}}__{{ record.data.last.ltp}}"
+                           type="button" id="submitWatchListAdd" class="btn btn-link btn-sm" data-bs-toggle="modal"
+                           data-bs-target="#AddStockWatcher" onclick="stockWatcher(this)">
+                Add To Watch
+              </button></td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+<div class="modal fade" id="AddStockWatcher" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel1">Add Stock To Watcher</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'watch-list' %}">
+          {% csrf_token %}
+          <div class="row">
+            <div class="col">
+              <label for="tickLabel" class="form-label">Tick</label>
+              <input type="text" id="tickLabel" class="form-control" name="token" readonly="readonly">
+            </div>
+            <div class="col">
+              <label for="symbolLabel" class="form-label">Symbol</label>
+              <input type="text" id="symbolLabel" class="form-control" readonly="readonly" name="symbol">
+            </div>
+            <div class="col">
+              <label for="ltpLabel" class="form-label">LTP</label>
+              <input type="text" id="ltpLabel" class="form-control" readonly="readonly" name="ltp">
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+              <label for="lowPriceLabel" class="form-label">Low</label>
+              <input type="text" id="lowPriceLabel" class="form-control" name="price_low">
+            </div>
+            <div class="col">
+              <label for="highPriceLabel" class="form-label">High</label>
+              <input type="text" id="highPriceLabel" class="form-control" name="price_high">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Add</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="UpdateWatcherModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Edit Stock To Watcher</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="post" action="{% url 'watch-list' %}">
+          {% csrf_token %}
+          <input type="hidden" id="UpdateSymbolPkLabel" name="pk">
+          <div class="row">
+            <div class="col">
+              <label for="tickLabel" class="form-label">Tick</label>
+              <input type="text" id="UpdateTickLabel" class="form-control" name="token" readonly="readonly">
+            </div>
+            <div class="col">
+              <label for="symbolLabel" class="form-label">Symbol</label>
+              <input type="text" id="UpdateSymbolLabel" class="form-control" readonly="readonly" name="symbol">
+            </div>
+            <div class="col">
+              <label for="ltpLabel" class="form-label">LTP</label>
+              <input type="text" id="UpdateLtpLabel" class="form-control" readonly="readonly" name="ltp">
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col">
+              <label for="lowPriceLabel" class="form-label">Low</label>
+              <input type="text" id="UpdateLowPriceLabel" class="form-control" name="price_low">
+            </div>
+            <div class="col">
+              <label for="highPriceLabel" class="form-label">High</label>
+              <input type="text" id="UpdateHighPriceLabel" class="form-control" name="price_high">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+  $(document).ready(function() {
+      $('#stock-watchlist').DataTable({
+      });
+  } );
+
+  $(document).ready(function() {
+      $('#stock-table').DataTable({
+      });
+  } );
+
+function stockWatcher(data){
+  var ArrayData = data.value.split("__");
+  document.getElementById("tickLabel").value = ArrayData[0];
+  document.getElementById("symbolLabel").value = ArrayData[1];
+  document.getElementById("ltpLabel").value = ArrayData[2];
+};
+
+function stockWatcherEdit(data){
+  var ArrayData = data.value.split("__");
+  document.getElementById("UpdateSymbolPkLabel").value = ArrayData[0];
+  document.getElementById("UpdateTickLabel").value = ArrayData[1];
+  document.getElementById("UpdateSymbolLabel").value = ArrayData[2];
+  document.getElementById("UpdateLtpLabel").value = ArrayData[3];
+  document.getElementById("UpdateLowPriceLabel").value = ArrayData[4];
+  document.getElementById("UpdateHighPriceLabel").value = ArrayData[5];
+};
+{% endblock %}
