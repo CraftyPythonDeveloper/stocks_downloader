@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponseNotFound, FileResponse
 from .models import SubscribedData, WebSocketData
 from utils.decorators import allowed_methods
 from utils.threadings import LIST_OF_THREADS
-from utils.make_candles import CANDLE_TIMEFRAMES, is_working_hr
+from utils.make_candles import CANDLE_TIMEFRAMES, is_working_hr, load_data
 from utils.shoonya_api import sapi
 from django.conf import settings
 import logging
@@ -31,7 +31,7 @@ if settings.RUN_THREADS:
 
 shoonya_api = sapi.login()
 logger.info(f"Login status {sapi.is_loggedin}")
-
+load_data()
 
 @allowed_methods(["GET"])
 @login_required
@@ -230,3 +230,26 @@ def websocket_ops(request):
         return JsonResponse({"message": "Websocket is closed.."})
     logger.info(f"Either ops param missing or not valid.. {ops}")
     return JsonResponse({"message", "Either ops param missing or not valid.."})
+
+
+def candles(request):
+    tick = request.GET.get("tick")
+    timeframe = request.GET.get("timeframe")
+    order_by = request.GET.get("order_by")
+    order_dir = request.GET.get("order_dir", "asc")
+    limit = request.GET.get("limit")
+
+    if not (tick and timeframe and limit):
+        return JsonResponse(dict(status=False, message="Required parameters missing..."))
+    try:
+        tick, timeframe, limit = int(tick), int(timeframe), int(limit)
+        if timeframe not in (1, 5, 15, 30, 60):
+            raise ValueError
+    except ValueError:
+        return JsonResponse(dict(status=False, message="Not a valid input.."))
+    queryset = CANDLE_TIMEFRAMES[timeframe].objects.filter(Tick=tick, length__gt=10).order_by("-id")[:limit]
+    if order_by:
+        if order_dir == "desc":
+            order_by = "-"+order_by
+        queryset = getattr(queryset, "order_by")(order_by)
+    return JsonResponse(dict(status=True, data=list(queryset.values())[::-1]))

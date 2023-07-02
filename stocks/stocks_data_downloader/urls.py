@@ -16,4 +16,5 @@ urlpatterns = [
     path("ping/", views.ping, name="ping"),
     path("get-running-threads/", views.get_running_threads, name="get-running-threads"),
     path("websocket-ops/", views.websocket_ops, name="websocket-ops"),
+    path("api/candles", views.candles, name="candles"),
 ]

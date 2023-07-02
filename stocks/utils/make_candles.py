@@ -4,6 +4,8 @@ from stocks_data_downloader.models import (WebSocketData, SubscribedData, Candle
 import time
 import pytz
 import logging
+from utils.shoonya_api import sapi
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -93,3 +95,41 @@ def draw_candle(timeframe):
             continue
         time.sleep(1)
 
+
+def last_workingday():
+    now = datetime.now()
+    if now.weekday() > 4:
+        return (datetime.now()-timedelta(days=now.weekday()-4)).replace(hour=9, minute=15, second=0)
+    elif now.weekday() < 1:
+        return (datetime.now()-timedelta(days=3)).replace(hour=9, minute=15, second=0)
+    return (datetime.now()-timedelta(days=1)).replace(hour=9, minute=15, second=0)
+
+
+def get_historic_data(tick, interval):
+    if not sapi.is_loggedin:
+        sapi.login()
+    data = sapi.api.get_time_price_series(exchange="NSE", token=str(tick), starttime=last_workingday().timestamp(),
+                                          interval=interval)
+    return data[::-1]
+
+
+def load_data():
+    all_stocks = SubscribedData.objects.filter(is_active=True)
+    for stock in all_stocks:
+        for i in (1, 5, 15, 30, 60):
+            count = CANDLE_TIMEFRAMES[i].objects.filter(Tick=stock.token).count()
+            if not count:
+                data = get_historic_data(stock.token, i)
+                if not data:
+                    logger.error(f"no data for {stock.token} with timeframe of {i}")
+                    continue
+                querysets = []
+                for row in data:
+                    querysets.append(CANDLE_TIMEFRAMES[i](Tick=stock.token, unix_time=row["ssboe"],
+                                                          Open=row["into"], High=row["inth"],
+                                                          Low=row["intl"], Close=row["intc"],
+                                                          Volume=row["v"], length=60))
+                n = CANDLE_TIMEFRAMES[i].objects.bulk_create(querysets)
+                logger.info(f"Inserted {n} records with timeframe of {i} minutes for {stock.token}..")
+            else:
+                logger.info(f"candle {i} is not empty, skipping load data..")
