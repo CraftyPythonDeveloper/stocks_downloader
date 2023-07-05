@@ -14,9 +14,11 @@ from pymongo import DESCENDING
 
 from stocks_data_downloader.models import SchedularTable, SchedularHistory, SubscribedData
 from utils.shoonya_api import sapi
-
+from stocks_data_downloader.models import (WebSocketData, SubscribedData, CandleOne, CandleFive, CandleFifteen,
+                                           CandleThirty, CandleSixty, )
 from utils.mongo_conn import db
 
+CANDLE_TIMEFRAMES = {1: CandleOne, 5: CandleFive, 15: CandleFifteen, 30: CandleThirty, 60: CandleSixty}
 logger = logging.getLogger(__name__)
 tz = settings.INDIAN_TIMEZONE
 
@@ -102,12 +104,13 @@ def register_function(func, interval):
     start_time = datetime.now(tz=settings.INDIAN_TIMEZONE).replace(second=0, microsecond=0)
 
     last_run = start_time.replace(minute=start_time.minute - start_time.minute %
-                                  get_timedelta_minutes(interval_timedelta))
+                                         get_timedelta_minutes(interval_timedelta))
     next_run = last_run + interval_timedelta
     if old_schedular_task:
         old_schedular_task.last_run = last_run.timestamp()
         old_schedular_task.next_run = next_run.timestamp()
         old_schedular_task.interval = interval
+        old_schedular_task.is_enabled = True
         if old_schedular_task.readable_function != function_src:
             old_schedular_task.serializer_function = pickle_func(func)
             old_schedular_task.readable_function = function_src
@@ -197,7 +200,7 @@ def mongo_convert_to_dict(queryset, last_id):
         doc_dict["id"] = id_
         return doc_dict
 
-    ids = [i for i in range(last_id+1, last_id+len(queryset)+1)]
+    ids = [i for i in range(last_id + 1, last_id + len(queryset) + 1)]
     return list(map(_convert, queryset, ids))
 
 
@@ -223,3 +226,57 @@ def send_telegram_msg(msg):
         logger.error(f"unable to send message, trying again.. url| {url}")
         time.sleep(1)
     return False
+
+
+def is_candle_ended(start_time, candle_length):
+    current_time = datetime.now().replace(second=0, microsecond=0)
+    # print(current_time, start_time + timedelta(minutes=candle_length))
+    return current_time >= start_time + timedelta(minutes=candle_length)
+
+
+def last_workingday():
+    now = datetime.now()
+    if now.weekday() > 4:
+        return (datetime.now() - timedelta(days=now.weekday() - 4)).replace(hour=9, minute=15, second=0)
+    elif now.weekday() < 1:
+        return (datetime.now() - timedelta(days=3)).replace(hour=9, minute=15, second=0)
+    return (datetime.now() - timedelta(days=1)).replace(hour=9, minute=15, second=0)
+
+
+def get_historic_data(tick, interval):
+    if not sapi.is_loggedin:
+        sapi.login()
+    start_dt = last_workingday() - timedelta(days=2)
+    if interval > 5:
+        start_dt -= timedelta(days=12)
+    if interval > 30:
+        start_dt -= timedelta(days=20)
+    data = sapi.api.get_time_price_series(exchange="NSE", token=str(tick), starttime=start_dt.timestamp(),
+                                          interval=interval)
+    return data[::-1]
+
+
+def load_data():
+    all_stocks = SubscribedData.objects.filter(is_active=True)
+    for stock in all_stocks:
+        for i in (1, 5, 15, 30, 60):
+            count = CANDLE_TIMEFRAMES[i].objects.filter(tick=stock.token).count()
+            if not count:
+                data = get_historic_data(stock.token, i)
+                if not data:
+                    logger.error(f"no data for {stock.token} with timeframe of {i}")
+                    continue
+                querysets = []
+                for row in data:
+                    querysets.append(CANDLE_TIMEFRAMES[i](tick=stock, unix_time=row["ssboe"],
+                                                          Open=row["into"], High=row["inth"],
+                                                          Low=row["intl"], Close=row["intc"],
+                                                          Volume=row["v"], length=60,
+                                                          date_time=datetime.fromtimestamp(int(row["ssboe"]),
+                                                                                           tz=tz).strftime(
+                                                              "%d-%m-%Y %H:%M:%S")))
+                n = CANDLE_TIMEFRAMES[i].objects.bulk_create(querysets)
+                logger.info(f"Inserted {len(n)} records with timeframe of {i} minutes for symbol {stock.symbol} and "
+                            f"token {stock.token}..")
+            else:
+                logger.info(f"candle {i} is not empty, skipping load data..")

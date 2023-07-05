@@ -1,8 +1,4 @@
-import json
 from datetime import datetime
-
-from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import F
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponseNotFound, FileResponse
 from stocks_data_downloader.models import SubscribedData, WebSocketData, StockWatcher, WatcherHistory
@@ -10,7 +6,7 @@ from utils.decorators import allowed_methods
 from utils.threadings import LIST_OF_THREADS, run_thread
 from utils.shoonya_api import sapi
 from utils.initial_run_functions import register_all_functions_to_schedular, auto_subscribe_on_run
-from utils.misc import subscribe_all_tokens
+from utils.misc import subscribe_all_tokens, load_data
 from utils.scheduler_functions import CANDLE_TIMEFRAMES
 from django.conf import settings
 import logging
@@ -37,6 +33,7 @@ if settings.RUN_THREADS:
     running_threads = [run_thread(t) for t in LIST_OF_THREADS if not t.is_alive()]
 
 shoonya_api = sapi.login()
+load_data()
 logger.info(f"Login status {sapi.is_loggedin}")
 
 
@@ -52,12 +49,14 @@ def index(request):
 @login_required
 def search_token(request):
     symbol = request.GET.get("symbol")
+    stock_type = request.GET.get("type", "NSE")
+    print(stock_type)
     if not symbol:
         logger.info("symbol parameter missing..")
         return JsonResponse({"message": "symbol parameter missing.."})
     subscribed_data = SubscribedData.objects.filter(is_active=True)
     try:
-        data = sapi.get_token(symbol=symbol, multiple=True)[:10]
+        data = sapi.get_token(symbol=symbol, multiple=True, exchange=stock_type)[:10]
         data = {"status": True, "data": data}
         logger.info(f"Found {len(data)} tokens for {symbol} symbol")
     except TypeError:
@@ -70,13 +69,15 @@ def search_token(request):
 @login_required
 def subscribe_token(request):
     token = request.GET.get("token")
+    stock_type = request.GET.get("type", "NSE")
+    print(stock_type, token)
     if not token:
         return redirect("/")
     if token == "all":
         subscribe_all_tokens()
         return redirect("/")
     if sapi.is_feed_opened:
-        subscribe = sapi.subscribe_wsticks(token)
+        subscribe = sapi.subscribe_wsticks(token, exchange=stock_type)
     else:
         subscribe = True
         logger.info("Websocket feed is not open.. Skipping single subscribe token..")
@@ -191,10 +192,6 @@ def show_candles(request):
         filters["unix_time__lt"] = request.GET.get("to")
 
     data = CANDLE_TIMEFRAMES[timeframe].objects.filter(*filters).order_by("-unix_time")[:limit]
-    # data = CANDLE_TIMEFRAMES[timeframe].objects.annotate(symbol=F('tick__symbol')).filter().order_by("-unix_time") \
-    #     [:limit]
-    # return JsonResponse(dict(data=list(data.values())))
-
     return render(request, "candles.html", context={"latest_data": data})
 
 
@@ -231,10 +228,6 @@ def stocks_logout(request):
 
 def ping(request):
     return JsonResponse({"status": "ok"})
-
-
-def get_running_threads(request):
-    return
 
 
 @allowed_methods(["GET"])
@@ -279,14 +272,6 @@ def watch_list(request):
     else:
         all_subscribed_stocks = SubscribedData.objects.filter(is_active=True)
         all_watchlist_stocks = StockWatcher.objects.filter(is_active=True)
-        # ltp_data = {}
-        # for symbol_data in all_subscribed_stocks:
-        #     latest_price = WebSocketData.objects.filter(tick=symbol_data.token).exclude(ltp=None).last()
-        #     if not latest_price:
-        #         ltp_data[symbol_data.token] = 0
-        #         continue
-        #     ltp_data[symbol_data.token] = latest_price.ltp
-
         data = {"stocks_data": all_subscribed_stocks, "watchlist_data": all_watchlist_stocks}
         return render(request, "watch_list.html", context=data)
 
@@ -304,6 +289,24 @@ def del_watch_list(request):
     return redirect("/watch-list")
 
 
-@allowed_methods(["get"])
-def strategies(request):
-    return render(request, "strategy.html")
+def candles(request):
+    tick = request.GET.get("tick")
+    timeframe = request.GET.get("timeframe")
+    order_by = request.GET.get("order_by")
+    order_dir = request.GET.get("order_dir", "asc")
+    limit = request.GET.get("limit")
+
+    if not (tick and timeframe and limit):
+        return JsonResponse(dict(status=False, message="Required parameters missing..."))
+    try:
+        tick, timeframe, limit = int(tick), int(timeframe), int(limit)
+        if timeframe not in (1, 5, 15, 30, 60):
+            raise ValueError
+    except ValueError:
+        return JsonResponse(dict(status=False, message="Not a valid input.."))
+    queryset = CANDLE_TIMEFRAMES[timeframe].objects.filter(tick=tick, length__gt=20).order_by("-id")[:limit]
+    if order_by:
+        if order_dir == "desc":
+            order_by = "-"+order_by
+        queryset = getattr(queryset, "order_by")(order_by)
+    return JsonResponse(dict(status=True, data=list(queryset.values())[::-1]))

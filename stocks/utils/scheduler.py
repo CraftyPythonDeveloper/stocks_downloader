@@ -19,7 +19,7 @@ def run_schedular():
             tasks_to_run = SchedularTable.objects.filter(is_enabled=True, next_run__lte=unix_now)
             if tasks_to_run:
                 logger.info(f"Number of tasks to run {len(tasks_to_run)}")
-            with ThreadPoolExecutor(max_workers=50) as executor:
+            with ThreadPoolExecutor(max_workers=2) as executor:
                 for task in tasks_to_run:
                     executor.submit(run_n_update_task, task)
             finish_time = time.time() - st

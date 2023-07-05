@@ -48,7 +48,11 @@
       </div>
       <form id="search-form" method="get" action="{% url 'search-symbol' %}">
         <div class="input-group mb-3">
-          <input type="text" class="form-control" id="searchInput" name="symbol" placeholder="Search symbol...">
+            <select name="type" class="me-1" required>
+              <option value="NSE">NSE</option>
+              <option value="NFO">NFO</option>
+            </select>
+          <input type="text" class="form-control" id="searchInput" name="symbol" placeholder="Search symbol..." required>
           <div class="input-group-append">
             <button class="btn btn-primary" type="submit" id="searchButton">Search</button>
           </div>
