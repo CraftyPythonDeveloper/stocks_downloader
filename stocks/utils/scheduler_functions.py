@@ -145,8 +145,10 @@ def migrate_table(**kwargs):
 
 
 def purge_old_data(**kwargs):
-    old_dt = datetime.now(tz=settings.INDIAN_TIMEZONE) - timedelta(days=7)
+    old_dt = datetime.now(tz=settings.INDIAN_TIMEZONE) - timedelta(days=3)
     for table_name in valid_tables:
+        if table_name != "websocket_data":
+            old_dt += timedelta(days=7)
         models[table_name].objects.filter(unix_time__lt=old_dt.timestamp()).delete()
         results = db[table_name].remove({"unix_time": {"$lt": old_dt.timestamp()}})
         logger.info(f"Deleted old data from {table_name} table. Data older than {old_dt.strftime('%d-%m-%Y')}. "
