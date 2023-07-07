@@ -19,7 +19,7 @@ from django.template.defaulttags import register
 def get_item(dictionary, key):
     return dictionary.get(key)
 
-
+CANDLE_TIMEFRAMES_TEXT = {1: "candle_one", 5: "candle_five", 15: "candle_fifteen", 30: "candle_thirty", 60: "candle_sixty"}
 logger = logging.getLogger(__name__)
 
 running_threads = LIST_OF_THREADS
@@ -288,25 +288,33 @@ def del_watch_list(request):
     stock.save()
     return redirect("/watch-list")
 
-
+from django.db.models import Q
 def candles(request):
-    tick = request.GET.get("tick")
+    ticks = request.GET.get("ticks")
     timeframe = request.GET.get("timeframe")
     order_by = request.GET.get("order_by")
     order_dir = request.GET.get("order_dir", "asc")
     limit = request.GET.get("limit")
-
-    if not (tick and timeframe and limit):
+    if not (timeframe and limit):
         return JsonResponse(dict(status=False, message="Required parameters missing..."))
     try:
-        tick, timeframe, limit = int(tick), int(timeframe), int(limit)
+        timeframe, limit = int(timeframe), int(limit)
         if timeframe not in (1, 5, 15, 30, 60):
             raise ValueError
     except ValueError:
         return JsonResponse(dict(status=False, message="Not a valid input.."))
-    queryset = CANDLE_TIMEFRAMES[timeframe].objects.filter(tick=tick, length__gt=20).order_by("-id")[:limit]
-    if order_by:
-        if order_dir == "desc":
-            order_by = "-"+order_by
-        queryset = getattr(queryset, "order_by")(order_by)
-    return JsonResponse(dict(status=True, data=list(queryset.values())[::-1]))
+    token_filters = {"is_active": True}
+    if ticks:
+        token_filters["token__in"] = ticks.split(",")
+    ticks_objs = SubscribedData.objects.filter(*[Q(**{key: value}) for key, value in token_filters.items()])
+
+    data = {}
+    for tick in ticks_objs:
+        queryset = getattr(tick, CANDLE_TIMEFRAMES_TEXT[timeframe]).filter( length__gt=20).order_by("-id")[:limit]
+        if order_by:
+            if order_dir == "desc":
+                order_by = "-" + order_by
+            queryset = getattr(queryset, "order_by")(order_by)
+        data[tick.token] = list(queryset.values())[::-1]
+
+    return JsonResponse(dict(status=True, data=data))
